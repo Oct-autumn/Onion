@@ -184,6 +184,7 @@ const resetForm = () => {
 <style scoped>
 .register-container {
   min-height: 100vh;
+  width: 100%; 
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
@@ -202,6 +203,7 @@ const resetForm = () => {
 
 .image-section {
   flex: 1;
+  min-width: 0; 
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
@@ -247,6 +249,7 @@ const resetForm = () => {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
+  min-width: 0; 
 }
 
 .register-card {
