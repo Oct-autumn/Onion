@@ -105,7 +105,7 @@
             ref="passwordFormRef"
             :model="passwordForm"
             :rules="passwordRules"
-            label-width="120px"
+            label-width="140px"
             class="password-form"
           >
             <el-form-item label="Current Password" prop="currentPassword">
@@ -396,12 +396,24 @@ onMounted(() => {
 <style scoped>
 .profile-container {
   min-height: 100vh;
-  width: 100%;
+  width: 100vw;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 20px;
+  padding: 60px 20px;
+  position: relative;
+}
+
+.profile-container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  z-index: -1;
 }
 
 .profile-wrapper {
@@ -412,7 +424,7 @@ onMounted(() => {
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  min-height: 600px;
+  min-height: calc(100vh - 120px);
 }
 
 .avatar-section {
@@ -464,7 +476,7 @@ onMounted(() => {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  min-height: 100vh;
+  padding-top: 40px;
 }
 
 .profile-card {
@@ -473,6 +485,7 @@ onMounted(() => {
   border: none;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   border-radius: 12px;
+  margin-top: 20px;
 }
 
 .card-header {
@@ -495,6 +508,12 @@ onMounted(() => {
 
 .password-form {
   padding: 20px 0;
+}
+
+.password-form .el-form-item__label {
+  text-align: left;
+  width: 140px !important;
+  white-space: nowrap;
 }
 
 .update-button, .password-button {

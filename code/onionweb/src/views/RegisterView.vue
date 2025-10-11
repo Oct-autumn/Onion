@@ -184,7 +184,7 @@ const resetForm = () => {
 <style scoped>
 .register-container {
   min-height: 100vh;
-  width: 100%; 
+  width: 100vw; 
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
@@ -195,7 +195,7 @@ const resetForm = () => {
 .register-wrapper {
   display: flex;
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
   background: white;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   overflow: hidden;
