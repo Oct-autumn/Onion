@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import MainLayout from '../components/layouts/MainLayout.vue'
 import ProjectView from '../views/ProjectView.vue'
 import UserView from '../views/UserView.vue'
+import ProfileView from '../views/ProfileView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import ProjectDetailLayout from '../views/project/ProjectDetailLayout.vue'
@@ -27,6 +28,7 @@ const routes = [
     children: [
       { path: '/project', name: 'project', component: ProjectView },
       { path: '/user', name: 'user', component: UserView },
+      { path: '/profile', name: 'profile', component: ProfileView },
       {
         path: '/project/:id',
         component: ProjectDetailLayout,

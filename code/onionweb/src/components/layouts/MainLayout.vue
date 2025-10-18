@@ -20,6 +20,25 @@
           <span>用户管理</span>
         </el-menu-item>
       </el-menu>
+
+    <!-- 用户信息区域 -->
+    <div class="user-info">
+        <el-dropdown @command="handleUserCommand">
+          <span class="user-dropdown">
+            <el-avatar :size="32" class="user-avatar">
+              {{ currentUser?.name?.charAt(0) || 'U' }}
+            </el-avatar>
+            <span class="user-name">{{ currentUser?.name || '用户' }}</span>
+            <el-icon><ArrowDown /></el-icon>
+          </span>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="profile">个人资料</el-dropdown-item>
+              <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </div>
     </el-header>
 
 
@@ -31,13 +50,45 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Message, User } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Message, User, UserFilled, ArrowDown } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()
 const activeMenu = ref(route.path)
+const currentUser = ref(null)
+
+// 获取当前用户信息
+onMounted(() => {
+  const userStr = localStorage.getItem('user')
+  if (userStr) {
+    currentUser.value = JSON.parse(userStr)
+  }
+})
+
+// 处理用户下拉菜单命令
+const handleUserCommand = (command) => {
+  if (command === 'profile') {
+    router.push('/profile')
+  } else if (command === 'logout') {
+    ElMessageBox.confirm('确定要退出登录吗？', '退出确认', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    }).then(() => {
+      // 清除本地存储
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      currentUser.value = null
+      ElMessage.success('已退出登录')
+      router.push('/login')
+    }).catch(() => {
+      // 用户取消退出
+    })
+  }
+}
 
 // 点击菜单切换路由
 const handleSelect = (key) => {
@@ -79,5 +130,36 @@ watch(
   flex: 1;
   padding: 24px;
   background: #fafafa;
+}
+
+.user-info {
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+}
+
+.user-dropdown {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background-color 0.3s;
+}
+
+.user-dropdown:hover {
+  background-color: #f0f0f0;
+}
+
+.user-avatar {
+  margin-right: 8px;
+  background-color: #409EFF;
+  color: white;
+}
+
+.user-name {
+  margin-right: 8px;
+  font-weight: 500;
+  color: #606266;
 }
 </style>
