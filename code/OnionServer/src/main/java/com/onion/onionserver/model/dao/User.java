@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.springframework.security.core.GrantedAuthority;
 
 import java.time.LocalDateTime;
 
@@ -17,10 +18,10 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "username", unique = true, nullable = false, length = 50)
+    @Column(name = "username", nullable = false, length = 50)
     private String username;
 
-    @Column(name = "email", unique = true, length = 100)
+    @Column(name = "email", unique = true, nullable = false, length = 100)
     private String email;
 
     @Column(name = "role", nullable = false)
@@ -29,10 +30,31 @@ public class User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private UserAuth userAuth;
 
-    @Column(name = "create_at")
+    @Column(name = "create_at", nullable = false)
     private LocalDateTime createAt;
 
-    @Column(name = "update_at")
+    @Column(name = "update_at", nullable = false)
     private LocalDateTime updateAt;
+
+    public java.util.Collection<? extends GrantedAuthority> getAuthorities() {
+        if (role == 1) {
+            return java.util.Collections.singletonList(new Authority("ROLE_ADMIN"));
+        } else {
+            return java.util.Collections.singletonList(new Authority("ROLE_USER"));
+        }
+    }
+
+    public static class Authority implements GrantedAuthority {
+        private final String authority;
+
+        public Authority(String authority) {
+            this.authority = authority;
+        }
+
+        @Override
+        public String getAuthority() {
+            return authority;
+        }
+    }
 }
 
