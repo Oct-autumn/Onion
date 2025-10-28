@@ -15,7 +15,7 @@
           <el-icon><Message /></el-icon>
           <span>项目管理</span>
         </el-menu-item>
-        <el-menu-item index="/user">
+        <el-menu-item v-if="isAdmin" index="/user">
           <el-icon><User /></el-icon>
           <span>用户管理</span>
         </el-menu-item>
@@ -59,12 +59,15 @@ const router = useRouter()
 const route = useRoute()
 const activeMenu = ref(route.path)
 const currentUser = ref(null)
+const isAdmin = ref(false)
 
 // 获取当前用户信息
 onMounted(() => {
   const userStr = localStorage.getItem('user')
   if (userStr) {
     currentUser.value = JSON.parse(userStr)
+    const role = currentUser.value?.role
+    isAdmin.value = role === '超级管理员' || role === 'admin' || role === '管理员'
   }
 })
 

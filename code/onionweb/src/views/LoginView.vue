@@ -106,17 +106,17 @@ const submitForm = async () => {
     if (valid) {
       loading.value = true
       try {
-        // 测试用户验证（用于前端测试）
-        if (loginForm.email === 'admin@onion.com' && loginForm.password === 'admin123') {
-          // 模拟登录成功
-          localStorage.setItem('token', 'test-token-12345')
-          localStorage.setItem('user', JSON.stringify({
-            id: 1,
-            name: '超级管理员',
-            email: 'admin@onion.com',
-            role: '超级管理员'
-          }))
-          ElMessage.success('登录成功！')
+        // 测试用户验证（用于前端测试，支持管理员与普通用户）
+        const testUsers = [
+          { id: 1, name: '超级管理员', email: 'admin@onion.com', password: 'admin123', role: '超级管理员' },
+          { id: 2, name: '张三', email: 'zhangsan@example.com', password: 'pass123', role: '开发者' },
+          { id: 3, name: '李四', email: 'lisi@example.com', password: 'pass123', role: '设计师' }
+        ]
+        const matched = testUsers.find(u => u.email === loginForm.email && u.password === loginForm.password)
+        if (matched) {
+          localStorage.setItem('token', `test-token-${matched.id}`)
+          localStorage.setItem('user', JSON.stringify({ id: matched.id, name: matched.name, email: matched.email, role: matched.role }))
+          ElMessage.success('登录成功！(测试用户)')
           router.push('/')
           return
         }
