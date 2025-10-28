@@ -69,53 +69,11 @@
                   <el-option label="设计师" value="设计师" />
                   <el-option label="产品经理" value="产品经理" />
                   <el-option label="项目经理" value="项目经理" />
-                  <el-option label="超级管理员" value="超级管理员" />
+                  <el-option v-if="isAdmin" label="超级管理员" value="超级管理员" />
                 </el-select>
               </el-form-item>
             </el-col>
-            <el-col :span="12">
-              <el-form-item label="部门" prop="department">
-                <el-input
-                  v-model="profileForm.department"
-                  placeholder="请输入部门"
-                  clearable
-                />
-              </el-form-item>
-            </el-col>
           </el-row>
-  
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="电话" prop="phone">
-                <el-input
-                  v-model="profileForm.phone"
-                  placeholder="请输入电话号码"
-                  clearable
-                />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="入职日期" prop="joinDate">
-                <el-date-picker
-                  v-model="profileForm.joinDate"
-                  type="date"
-                  placeholder="选择入职日期"
-                  style="width: 100%"
-                />
-              </el-form-item>
-            </el-col>
-          </el-row>
-  
-          <el-form-item label="个人简介" prop="bio">
-            <el-input
-              v-model="profileForm.bio"
-              type="textarea"
-              :rows="4"
-              placeholder="请输入个人简介"
-              maxlength="200"
-              show-word-limit
-            />
-          </el-form-item>
   
           <el-form-item v-if="isEditMode">
             <el-button type="primary" @click="saveProfile" :loading="loading">
@@ -195,7 +153,7 @@
   </template>
   
   <script setup>
-  import { ref, reactive, onMounted } from 'vue'
+  import { ref, reactive, onMounted, computed } from 'vue'
   import { ElMessage, ElMessageBox } from 'element-plus'
   
   // 响应式数据
@@ -207,16 +165,16 @@
   
   // 当前用户信息
   const currentUser = ref(null)
+  const isAdmin = computed(() => {
+    const role = currentUser.value?.role
+    return role === '超级管理员' || role === 'admin' || role === '管理员'
+  })
   
   // 个人资料表单
   const profileForm = reactive({
     name: '',
     email: '',
-    role: '',
-    department: '',
-    phone: '',
-    joinDate: '',
-    bio: ''
+    role: ''
   })
   
   // 密码修改表单
@@ -287,11 +245,7 @@
       Object.assign(profileForm, {
         name: currentUser.value.name || '',
         email: currentUser.value.email || '',
-        role: currentUser.value.role || '',
-        department: '技术部',
-        phone: '138****8888',
-        joinDate: '2024-01-01',
-        bio: '这是一个热爱技术的开发者，专注于前端开发和用户体验设计。'
+        role: currentUser.value.role || ''
       })
     }
   })
@@ -315,6 +269,13 @@
       // 模拟API调用
       await new Promise(resolve => setTimeout(resolve, 1000))
       
+      // 普通用户不可把角色修改为管理员
+      if (!isAdmin.value && (profileForm.role === '超级管理员' || profileForm.role === 'admin' || profileForm.role === '管理员')) {
+        ElMessage.error('无权限将角色修改为管理员')
+        loading.value = false
+        return
+      }
+
       // 更新本地存储
       const updatedUser = { ...currentUser.value, ...profileForm }
       localStorage.setItem('user', JSON.stringify(updatedUser))
