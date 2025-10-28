@@ -4,8 +4,18 @@ import lombok.Data;
 
 public class UtilDTO {
     @Data
-    public static class GenericResponse {
-        private String message;
-        private int statusCode;
+    public static class ErrorResponse {
+        private int code;
+        private String msg;
+
+        public ErrorResponse(int code) {
+            this.code = code;
+            this.msg = "";
+        }
+
+        public ErrorResponse(int code, String msg) {
+            this.code = code;
+            this.msg = msg;
+        }
     }
 }

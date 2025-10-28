@@ -1,5 +1,6 @@
 package com.onion.onionserver.model.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 /*
@@ -7,33 +8,33 @@ import lombok.Data;
  * But in a real project, please do so.
  */
 
-public class User {
+public class UserDTO {
     @Data
     public static class LoginRequest {
-        private String username;
+        private String email;
         private String password;
     }
 
     @Data
+    @AllArgsConstructor
     public static class LoginResponse {
-        private String token;
+        private String authToken;
+        private Long userId;
         private String username;
-        private String email;
         private int role; // 0: normal user, 1: admin
     }
 
     @Data
     public static class RegisterRequest {
+        private String email;
         private String username;
         private String password;
-        private String email;
     }
 
     @Data
+    @AllArgsConstructor
     public static class RegisterResponse {
         private Long id;
-        private String username;
-        private String email;
         private int role; // 0: normal user, 1: admin
     }
 }
