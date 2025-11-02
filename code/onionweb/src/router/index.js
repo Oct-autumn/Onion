@@ -27,7 +27,7 @@ const routes = [
     meta: { requiresAuth: true },
     children: [
       { path: '/project', name: 'project', component: ProjectView },
-      { path: '/user', name: 'user', component: UserView },
+      { path: '/user', name: 'user', component: UserView, meta: { requiresAdmin: true } },
       { path: '/profile', name: 'profile', component: ProfileView },
       {
         path: '/project/:id',
@@ -50,9 +50,24 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const isAuthenticated = localStorage.getItem('token')
+  // 基础认证保护
   if (to.meta.requiresAuth && !isAuthenticated) {
     next('/login')
   } else {
+    // 管理员路由保护
+    if (to.matched.some(r => r.meta && r.meta.requiresAdmin)) {
+      try {
+        const userStr = localStorage.getItem('user')
+        const user = userStr ? JSON.parse(userStr) : null
+        const isAdmin = user && (user.role === '超级管理员' || user.role === 'admin' || user.role === '管理员')
+        if (!isAdmin) {
+          // 非管理员访问受限页面时，跳转到项目页
+          return next('/project')
+        }
+      } catch (_) {
+        return next('/project')
+      }
+    }
     next()
   }
 })
