@@ -36,7 +36,7 @@ const routes = [
         children: [
           { path: '', redirect: 'info' },
           { path: 'info', name: 'project-info', component: ProjectInfoView },
-          { path: 'kanban', name: 'project-kanban', component: KanbanView },
+          { path: 'kanban', name: 'project-kanban', component: KanbanView,props: true},
         ],
       },
     ],
