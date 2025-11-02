@@ -1,7 +1,7 @@
 <template>
   <div class="project-view">
     <!-- 项目列表 -->
-    <el-table :data="projects" style="width: 100%">
+    <el-table :data="paginatedProjects" style="width: 100%">
       <el-table-column prop="name" label="项目名称">
         <template #default="{ row }">
           <el-link type="primary" @click="openProject(row)">
@@ -14,6 +14,18 @@
       <el-table-column prop="created" label="创建日期" />
       <el-table-column prop="deadline" label="计划完成时间" />
     </el-table>
+
+    <!-- Pagination Controller -->
+    <div class="pagination-container">
+		<span class="pagination-text">共 {{ projects.length }} 个项目</span>
+		<el-pagination
+		  v-model:current-page="currentPage"
+		  :page-size="numProjectsPerPage"
+		  :total="projects.length"
+		  layout="prev, pager, next"
+		  @current-change="handlePageChange"
+		/>
+    </div>
 
     <!-- 弹窗 -->
     <el-dialog v-model="dialogVisible" width="90%" top="5vh" :title="selectedProject?.name">
@@ -67,7 +79,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import draggable from 'vuedraggable'
 import { ElMessageBox, ElMessage } from 'element-plus'
 
@@ -75,10 +87,33 @@ const dialogVisible = ref(false)
 const activeTab = ref('details')
 const selectedProject = ref(null)
 
+// Pagination variables
+const currentPage = ref(1)
+const numProjectsPerPage = ref(5)
+
 const projects = ref([
   { name: 'AI平台搭建', status: '进行中', owner: '张三', created: '2025-09-01', deadline: '2025-12-30' },
   { name: '前端重构', status: '已完成', owner: '李四', created: '2025-07-12', deadline: '2025-09-15' },
+  { name: 'AI平台搭建2', status: '进行中', owner: '张三', created: '2025-09-01', deadline: '2025-12-30' },
+  { name: '前端重构2', status: '已完成', owner: '李四', created: '2025-07-12', deadline: '2025-09-15' },
+  { name: 'AI平台搭建3', status: '进行中', owner: '张三', created: '2025-09-01', deadline: '2025-12-30' },
+  { name: '前端重构3', status: '已完成', owner: '李四', created: '2025-07-12', deadline: '2025-09-15' },
+  { name: 'AI平台搭建4', status: '进行中', owner: '张三', created: '2025-09-01', deadline: '2025-12-30' },
+  { name: '前端重构4', status: '已完成', owner: '李四', created: '2025-07-12', deadline: '2025-09-15' },
+  { name: 'AI平台搭建5', status: '进行中', owner: '张三', created: '2025-09-01', deadline: '2025-12-30' },
+  { name: '前端重构5', status: '已完成', owner: '李四', created: '2025-07-12', deadline: '2025-09-15' },
+  { name: 'AI平台搭建6', status: '进行中', owner: '张三', created: '2025-09-01', deadline: '2025-12-30' },
+  { name: '前端重构6', status: '已完成', owner: '李四', created: '2025-07-12', deadline: '2025-09-15' },
+  { name: 'AI平台搭建7', status: '进行中', owner: '张三', created: '2025-09-01', deadline: '2025-12-30' },
+  { name: '前端重构7', status: '已完成', owner: '李四', created: '2025-07-12', deadline: '2025-09-15' },  
 ])
+
+// Computed property for paginated projects
+const paginatedProjects = computed(() => {
+  const start = (currentPage.value - 1) * numProjectsPerPage.value
+  const end = start + numProjectsPerPage.value
+  return projects.value.slice(start, end)
+})
 
 // Kanban 数据
 const kanban = ref({
@@ -122,11 +157,26 @@ const removeTask = (columnKey, index) => {
       })
       .catch(() => {})
 }
+
+// Switch Page
+const handlePageChange = (page) => {
+  currentPage.value = page
+}
 </script>
 
 <style scoped>
 .project-view {
   padding: 20px;
+}
+
+.pagination-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.pagination-text {
+	
 }
 
 .kanban-board {
