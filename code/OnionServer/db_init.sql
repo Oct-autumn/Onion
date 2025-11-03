@@ -13,41 +13,26 @@ CREATE TABLE IF NOT EXISTS user (
 
 -- project table
 CREATE TABLE IF NOT EXISTS project (
-                                       id                  INTEGER PRIMARY KEY AUTOINCREMENT,
-                                       name                TEXT NOT NULL,
-                                       description         TEXT,
-                                       owner_id            INTEGER NOT NULL,
-                                       status              TEXT DEFAULT 'doing',
-                                       expected_completion TEXT,
-                                       created_at          TEXT NOT NULL DEFAULT (datetime('now')),
-                                       updated_at          TEXT NOT NULL DEFAULT (datetime('now')),
-                                       FOREIGN KEY (owner_id) REFERENCES user(id) ON DELETE CASCADE
+                         id INTEGER PRIMARY KEY AUTOINCREMENT,
+                         name TEXT NOT NULL,
+                         description TEXT,
+                         expected_completion TEXT,
+                         owner_id INTEGER NOT NULL,
+                         create_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                         update_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                         FOREIGN KEY (owner_id) REFERENCES user(id)
 );
+
 
 -- project member table
 CREATE TABLE IF NOT EXISTS project_member (
-                                              id           INTEGER PRIMARY KEY AUTOINCREMENT,
-                                              project_id   INTEGER NOT NULL,
-                                              user_id      INTEGER NOT NULL,
-                                              role         TEXT NOT NULL,
-                                              status       TEXT DEFAULT 'To-Do',
-                                              working_hour INTEGER DEFAULT 0,
-                                              joined_at    TEXT NOT NULL DEFAULT (datetime('now')),
-                                              FOREIGN KEY (project_id) REFERENCES project(id) ON DELETE CASCADE,
-                                              FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
-                                              UNIQUE (project_id, user_id)
+                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                project_id INTEGER NOT NULL,
+                                user_id INTEGER NOT NULL,
+                                role TEXT NOT NULL,       -- 开发者/测试员/项目经理
+                                status TEXT,              -- To-Do / In-Process
+                                working_hour TEXT,        -- 预估工时
+                                FOREIGN KEY (project_id) REFERENCES project(id),
+                                FOREIGN KEY (user_id) REFERENCES user(id)
 );
 
--- requirement table
-CREATE TABLE IF NOT EXISTS requirement (
-                                           id           INTEGER PRIMARY KEY AUTOINCREMENT,
-                                           project_id   INTEGER NOT NULL,
-                                           title        TEXT NOT NULL,
-                                           description  TEXT,
-                                           status       TEXT DEFAULT 'backlog',
-                                           assignee_id  INTEGER,
-                                           created_at   TEXT NOT NULL DEFAULT (datetime('now')),
-                                           updated_at   TEXT NOT NULL DEFAULT (datetime('now')),
-                                           FOREIGN KEY (project_id) REFERENCES project(id) ON DELETE CASCADE,
-                                           FOREIGN KEY (assignee_id) REFERENCES user(id)
-);

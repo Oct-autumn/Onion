@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Table(name = "project")
 public class Project {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // SQLite 支持
     private Long id;
 
     @Column(nullable = false, length = 100)
@@ -19,15 +19,14 @@ public class Project {
     private String description;
 
     @Column(name = "expected_completion")
-    private LocalDateTime expectedCompletion;
+    private String expectedCompletion; // SQLite 用 TEXT 存时间
 
-    @Column(name = "create_at", nullable = false)
-    private LocalDateTime createAt;
-
-    @Column(name = "update_at", nullable = false)
-    private LocalDateTime updateAt;
-
-    // 这里可以加上 ownerId 或者直接关联 User
     @Column(name = "owner_id", nullable = false)
     private Long ownerId;
+
+    @Column(name = "create_at")
+    private LocalDateTime createAt;
+
+    @Column(name = "update_at")
+    private LocalDateTime updateAt;
 }

@@ -20,10 +20,9 @@ public class ProjectController {
         this.projectService = projectService;
     }
 
+    // 创建项目
     @PostMapping("/create")
-    public ResponseEntity<ProjectResponseDTO> create(@RequestBody ProjectCreateDTO dto,
-                                                     @RequestHeader("Authorization") String token) {
-        // 简化：假设 token 里已经能解析出 userId
+    public ResponseEntity<ProjectResponseDTO> create(@RequestBody ProjectCreateDTO dto) {
         Long ownerId = 1L; // TODO: 从 token 解析
         Project saved = projectService.createProject(dto, ownerId);
 
@@ -37,6 +36,7 @@ public class ProjectController {
         return ResponseEntity.ok(resp);
     }
 
+    // 查询项目列表
     @PostMapping("/list")
     public ResponseEntity<List<ProjectResponseDTO>> list() {
         List<ProjectResponseDTO> resp = projectService.listProjects().stream().map(p -> {
@@ -51,6 +51,7 @@ public class ProjectController {
         return ResponseEntity.ok(resp);
     }
 
+    // 查询单个项目详情
     @GetMapping("/info/{id}")
     public ResponseEntity<ProjectResponseDTO> info(@PathVariable Long id) {
         Project p = projectService.getProject(id);
