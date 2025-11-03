@@ -11,6 +11,7 @@
       >
         <el-menu-item index="info">项目详情</el-menu-item>
         <el-menu-item index="kanban">Kanban</el-menu-item>
+		<el-menu-item index="chart">Chart</el-menu-item>
       </el-menu>
     </el-header>
 
