@@ -8,8 +8,9 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "project")
 public class Project {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // SQLite 支持
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, length = 100)
@@ -24,9 +25,9 @@ public class Project {
     @Column(name = "owner_id", nullable = false)
     private Long ownerId;
 
-    @Column(name = "create_at")
-    private LocalDateTime createAt;
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
-    @Column(name = "update_at")
-    private LocalDateTime updateAt;
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }
