@@ -8,7 +8,7 @@
       >
         <div class="column-header">
           <span class="column-title">{{ column.title }}</span>
-          <el-button size="mini" type="primary" @click="openAddTaskDialog(column.key)">
+          <el-button size="mini" type="primary" @click="openTaskDialog(column.key)">
             + 新增任务
           </el-button>
         </div>
@@ -31,6 +31,12 @@
                 <p class="task-workingHour">工时: {{ element.workingHour }}</p>
               </div>
               <el-button
+                  type="primary"
+                  size="mini"
+                  class="edit-task-btn"
+                  @click="openTaskDialog(element.status, element)"
+              >编辑</el-button>
+              <el-button
                   type="danger"
                   size="mini"
                   class="delete-task-btn"
@@ -42,8 +48,8 @@
       </div>
     </div>
 
-    <!-- 新增任务弹窗 -->
-    <el-dialog title="新增任务" width="500px" v-model="addTaskDialogVisible">
+    <!-- 任务弹窗 -->
+    <el-dialog title="任务" width="500px" v-model="addTaskDialogVisible">
       <el-form ref="taskFormRef" :model="newTask" label-width="100px">
         <el-form-item label="任务名称" prop="title">
           <el-input v-model="newTask.title" placeholder="请输入任务名称" />
@@ -60,7 +66,7 @@
       </el-form>
       <template #footer>
         <el-button @click="addTaskDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="addTask">确认</el-button>
+        <el-button type="primary" @click="saveTask">确认</el-button>
       </template>
     </el-dialog>
   </div>
@@ -72,7 +78,7 @@ import draggable from 'vuedraggable'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
 
-const projectId = 1 // 这里可以改成动态路由获取
+const projectId = 1 // 可以改为动态路由获取
 
 const columns = reactive([
   { key: 'todo', title: 'To-Do', tasks: [] },
@@ -85,11 +91,18 @@ const addTaskDialogVisible = ref(false)
 const currentColumnKey = ref(null)
 const newTask = reactive({ title: '', description: '', assigneer: '', workingHour: '' })
 const taskFormRef = ref(null)
+const editingTask = ref(null) // 当前编辑的任务
 
-// 打开新增任务弹窗
-const openAddTaskDialog = (columnKey) => {
+// 打开任务弹窗（新增或编辑）
+const openTaskDialog = (columnKey, taskToEdit = null) => {
   currentColumnKey.value = columnKey
-  Object.assign(newTask, { title: '', description: '', assigneer: '', workingHour: '' })
+  if (taskToEdit) {
+    Object.assign(newTask, { ...taskToEdit })
+    editingTask.value = taskToEdit
+  } else {
+    Object.assign(newTask, { title: '', description: '', assigneer: '', workingHour: '' })
+    editingTask.value = null
+  }
   addTaskDialogVisible.value = true
 }
 
@@ -108,25 +121,38 @@ const fetchTasks = async () => {
   }
 }
 
-// 新增任务
-const addTask = async () => {
+// 保存任务（新增或编辑）
+const saveTask = async () => {
   if (!newTask.title || !newTask.description || !newTask.assigneer || !newTask.workingHour) {
     ElMessage.warning('请填写完整任务信息')
     return
   }
+
   try {
-    const res = await request.post(`/kanban/tasks`, {
-      ...newTask,
-      status: currentColumnKey.value,
-      projectId
-    })
-    const col = columns.find(c => c.key === currentColumnKey.value)
-    if (col) col.tasks.push(res.data)
+    if (editingTask.value) {
+      // 编辑任务
+      const res = await request.put(`/kanban/tasks/${editingTask.value.id}`, {
+        ...newTask,
+        status: currentColumnKey.value,
+        projectId
+      })
+      Object.assign(editingTask.value, res.data)
+      ElMessage.success('任务更新成功')
+    } else {
+      // 新增任务
+      const res = await request.post(`/kanban/tasks`, {
+        ...newTask,
+        status: currentColumnKey.value,
+        projectId
+      })
+      const col = columns.find(c => c.key === currentColumnKey.value)
+      if (col) col.tasks.push(res.data)
+      ElMessage.success('任务添加成功')
+    }
     addTaskDialogVisible.value = false
-    ElMessage.success('任务添加成功')
   } catch (err) {
     console.error(err)
-    ElMessage.error('添加任务失败')
+    ElMessage.error(editingTask.value ? '更新任务失败' : '添加任务失败')
   }
 }
 
@@ -139,11 +165,8 @@ const deleteTask = async (task) => {
       type: 'warning'
     })
     await request.delete(`/kanban/tasks/${task.id}`)
-    // 从前端列表移除
     const col = columns.find(c => c.key === task.status)
-    if (col) {
-      col.tasks = col.tasks.filter(t => t.id !== task.id)
-    }
+    if (col) col.tasks = col.tasks.filter(t => t.id !== task.id)
     ElMessage.success('任务删除成功')
   } catch (err) {
     if (err !== 'cancel') {
@@ -165,7 +188,7 @@ const onTaskDragEnd = async (evt) => {
     } catch (err) {
       console.error(err)
       ElMessage.error('更新任务状态失败')
-      fetchTasks() // 回退前端状态
+      fetchTasks()
     }
   }
 }
@@ -181,7 +204,6 @@ const getTaskColor = (status) => {
   }
 }
 
-// 初始化
 onMounted(() => {
   fetchTasks()
 })
@@ -245,6 +267,11 @@ onMounted(() => {
   position: absolute;
   top: 8px;
   right: 8px;
+}
+.edit-task-btn {
+  position: absolute;
+  top: 8px;
+  right: 50px;
 }
 .task-title {
   font-weight: 600;
