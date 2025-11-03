@@ -4,7 +4,7 @@
     <el-card class="project-info-card">
       <div class="project-header">
         <h2 class="project-name">{{ project.name }}</h2>
-        <p class="team-count">团队人数: {{ project.team.length }} 人</p>
+        <p class="team-count">团队人数: {{ project.teamCount }} 人</p>
       </div>
     </el-card>
 
@@ -16,25 +16,32 @@
         </div>
       </template>
 
+      <!-- 添加成员按钮 -->
+      <el-button type="primary" size="small" @click="openAddMemberDialog">+ 添加成员</el-button>
+
       <!-- 表格 -->
       <el-table
-          ref="teamTable"
-          :data="paginatedTeam"
+          :data="members"
           stripe
           style="width: 100%; margin-bottom: 16px;"
-          v-loading="isLoading"
+          v-loading="loading"
           element-loading-text="加载中..."
       >
         <el-table-column prop="name" label="姓名" />
         <el-table-column prop="role" label="角色" />
         <el-table-column prop="email" label="邮箱" />
+        <el-table-column label="操作" width="100">
+          <template #default="{ row }">
+            <el-button type="danger" size="mini" @click="deleteMember(row.id)">删除</el-button>
+          </template>
+        </el-table-column>
       </el-table>
 
-      <!-- 分页器放在表格内部，卡片底部 -->
+      <!-- 分页器 -->
       <div class="pagination-wrapper">
         <div class="page-size-select">
           <span>每页显示：</span>
-          <el-select v-model="pageSize" size="small" style="width: 80px; margin: 0 10px;">
+          <el-select v-model="pageSize" size="small" style="width: 80px; margin: 0 10px;" @change="handlePageSizeChange">
             <el-option label="5" :value="5"></el-option>
             <el-option label="10" :value="10"></el-option>
             <el-option label="20" :value="20"></el-option>
@@ -44,102 +51,148 @@
         <el-pagination
             background
             layout="prev, pager, next, ->, total"
+            :current-page="currentPage"
             :page-size="pageSize"
-            :current-page.sync="currentPage"
-            :total="project.team.length"
-            :disabled="project.team.length === 0"
+            :total="totalMembers"
             @current-change="handlePageChange"
-            @size-change="handleSizeChange"
         />
       </div>
     </el-card>
+
+    <!-- 新增成员弹窗 -->
+    <el-dialog title="添加成员" v-model="addMemberDialogVisible" width="400px">
+      <el-form ref="addMemberFormRef" :model="newMember" label-width="80px">
+        <el-form-item label="姓名" prop="name">
+          <el-input v-model="newMember.name" placeholder="请输入姓名" />
+        </el-form-item>
+        <el-form-item label="角色" prop="role">
+          <el-input v-model="newMember.role" placeholder="请输入角色" />
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="newMember.email" placeholder="请输入邮箱" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="addMemberDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="addMember">确认</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
-
 <script setup>
-import { reactive, ref, computed, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import axios from 'axios'
 
 const route = useRoute()
+const projectId = route.params.id
+
+// 项目基本信息
 const project = reactive({
   name: '',
-  team: []
+  teamCount: 0
 })
 
+// 分页参数
 const currentPage = ref(1)
 const pageSize = ref(5)
-const teamTable = ref(null)
-const isLoading = ref(false)
+const totalMembers = ref(0)
+const members = ref([])
 
-// 计算分页后的数据
-const paginatedTeam = computed(() => {
-  // 处理边界情况
-  if (!project.team || project.team.length === 0) {
-    return []
+const loading = ref(false)
+
+// 添加成员弹窗
+const addMemberDialogVisible = ref(false)
+const newMember = reactive({ name: '', role: '', email: '' })
+
+
+// 打开新增成员弹窗
+const openAddMemberDialog = () => {
+  Object.assign(newMember, { name: '', role: '', email: '' })
+  addMemberDialogVisible.value = true
+}
+
+// 获取项目基本信息
+const fetchProjectInfo = async () => {
+  try {
+    const res = await request.get(`/api/projects/${projectId}`)
+    project.name = res.data.name
+    project.teamCount = res.data.teamCount
+  } catch (err) {
+    console.error(err)
+    ElMessage.error('网络错误，获取项目基本信息失败')
   }
+}
 
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
+// 获取团队成员列表
+const fetchMembers = async () => {
+  loading.value = true
+  try {
+    const res = await request.get(`/api/projects/${projectId}/team`, {
+      params: { page: currentPage.value, pageSize: pageSize.value }
+    })
+    members.value = res.data.members
+    totalMembers.value = res.data.total
+  } catch (err) {
+    console.error(err)
+    ElMessage.error('网络错误，获取团队成员失败')
+  } finally {
+    loading.value = false
+  }
+}
 
-  // 确保不会索引超出数组长度
-  return project.team.slice(start, Math.min(end, project.team.length))
-})
+// 新增成员
+const addMember = async () => {
+  if (!newMember.name || !newMember.role || !newMember.email) {
+    ElMessage.warning('请填写完整信息')
+    return
+  }
+  try {
+    const res = await request.post(`/api/projects/${projectId}/team`, newMember)
+    members.value.unshift(res.data.data)
+    project.teamCount++
+    totalMembers.value++
+    addMemberDialogVisible.value = false
+    ElMessage.success('添加成功')
+  } catch (err) {
+    console.error(err)
+    ElMessage.error(err.response?.data?.message || '添加失败')
+  }
+}
 
-// 处理页码变化
+// 删除成员
+const deleteMember = async (memberId) => {
+  try {
+    await request.delete(`/api/projects/${projectId}/team/${memberId}`)
+    members.value = members.value.filter(m => m.id !== memberId)
+    project.teamCount--
+    totalMembers.value--
+    ElMessage.success('删除成功')
+  } catch (err) {
+    console.error(err)
+    ElMessage.error(err.response?.data?.message || '删除失败')
+  }
+}
+
+// 页码变化
 const handlePageChange = (page) => {
   currentPage.value = page
-  scrollToTop()
+  fetchMembers()
 }
 
-// 处理每页条数变化
-const handleSizeChange = (size) => {
+// 每页数量变化
+const handlePageSizeChange = (size) => {
   pageSize.value = size
-  currentPage.value = 1 // 重置为第一页
-  scrollToTop()
+  currentPage.value = 1
+  fetchMembers()
 }
 
-// 滚动表格到顶部
-const scrollToTop = () => {
-  if (teamTable.value) {
-    const tableBody = teamTable.value.$el.querySelector('.el-table__body-wrapper')
-    if (tableBody) {
-      tableBody.scrollTop = 0
-    }
-  }
-}
-
-// 监听分页参数变化，确保页码有效
-watch([currentPage, pageSize], () => {
-  // 计算总页数
-  const totalPages = Math.ceil(project.team.length / pageSize.value) || 1
-
-  // 确保当前页码在有效范围内
-  if (currentPage.value > totalPages) {
-    currentPage.value = totalPages
-  } else if (currentPage.value < 1) {
-    currentPage.value = 1
-  }
-}, { immediate: true })
-
-onMounted(() => {
-  isLoading.value = true
-
-  // 模拟API请求延迟
-  setTimeout(() => {
-    const projectId = route.params.id
-    project.name = '示例项目 A'
-    project.team = [
-      { name: '张三', role: '项目经理', email: 'zhangsan@example.com' },
-      { name: '李四', role: '开发者', email: 'lisi@example.com' },
-      { name: '王五', role: '测试员', email: 'wangwu@example.com' },
-      { name: '赵六', role: '开发者', email: 'zhaoliu@example.com' },
-      { name: '钱七', role: '设计师', email: 'qianqi@example.com' },
-      { name: '孙八', role: '开发者', email: 'sunba@example.com' },
-      { name: '周九', role: '产品经理', email: 'zhoujiu@example.com' }
-    ]
-    isLoading.value = false
-  }, 500)
+// 初始化
+onMounted(async () => {
+  await fetchProjectInfo()
+  await fetchMembers()
 })
 </script>
 
@@ -191,19 +244,5 @@ onMounted(() => {
 .page-size-select {
   display: flex;
   align-items: center;
-}
-
-/* 响应式处理 */
-@media (max-width: 768px) {
-  .pagination-wrapper {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-
-  .page-size-select {
-    width: 100%;
-    justify-content: space-between;
-  }
 }
 </style>
