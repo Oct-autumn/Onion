@@ -28,8 +28,9 @@
           element-loading-text="加载中..."
       >
         <el-table-column prop="name" label="姓名" />
+        <el-table-column prop="status" label="状态" />
+        <el-table-column prop="workingHour" label="工时" />
         <el-table-column prop="role" label="角色" />
-        <el-table-column prop="email" label="邮箱" />
         <el-table-column label="操作" width="100">
           <template #default="{ row }">
             <el-button type="danger" size="mini" @click="deleteMember(row.id)">删除</el-button>
@@ -65,11 +66,14 @@
         <el-form-item label="姓名" prop="name">
           <el-input v-model="newMember.name" placeholder="请输入姓名" />
         </el-form-item>
+        <el-form-item label="状态" prop="status">
+          <el-input v-model="newMember.status" placeholder="请输入状态" />
+        </el-form-item>
+        <el-form-item label="工时" prop="workingHour">
+          <el-input v-model="newMember.workingHour" placeholder="请输入工时" />
+        </el-form-item>
         <el-form-item label="角色" prop="role">
           <el-input v-model="newMember.role" placeholder="请输入角色" />
-        </el-form-item>
-        <el-form-item label="邮箱" prop="email">
-          <el-input v-model="newMember.email" placeholder="请输入邮箱" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -84,7 +88,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import axios from 'axios'
+import request from '@/utils/request'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -105,19 +109,18 @@ const loading = ref(false)
 
 // 添加成员弹窗
 const addMemberDialogVisible = ref(false)
-const newMember = reactive({ name: '', role: '', email: '' })
-
+const newMember = reactive({ name: '', status: '', workingHour: '', role: '' })
 
 // 打开新增成员弹窗
 const openAddMemberDialog = () => {
-  Object.assign(newMember, { name: '', role: '', email: '' })
+  Object.assign(newMember, { name: '', status: '', workingHour: '', role: '' })
   addMemberDialogVisible.value = true
 }
 
 // 获取项目基本信息
 const fetchProjectInfo = async () => {
   try {
-    const res = await request.get(`/api/projects/${projectId}`)
+    const res = await request.get(`/project/info/${projectId}`)
     project.name = res.data.name
     project.teamCount = res.data.teamCount
   } catch (err) {
@@ -130,7 +133,7 @@ const fetchProjectInfo = async () => {
 const fetchMembers = async () => {
   loading.value = true
   try {
-    const res = await request.get(`/api/projects/${projectId}/team`, {
+    const res = await request.get(`/project/info/${projectId}/team`, {
       params: { page: currentPage.value, pageSize: pageSize.value }
     })
     members.value = res.data.members
@@ -145,12 +148,12 @@ const fetchMembers = async () => {
 
 // 新增成员
 const addMember = async () => {
-  if (!newMember.name || !newMember.role || !newMember.email) {
+  if (!newMember.name || !newMember.status || !newMember.workingHour || !newMember.role) {
     ElMessage.warning('请填写完整信息')
     return
   }
   try {
-    const res = await request.post(`/api/projects/${projectId}/team`, newMember)
+    const res = await request.post(`/project/info/${projectId}/team`, newMember)
     members.value.unshift(res.data.data)
     project.teamCount++
     totalMembers.value++
@@ -165,7 +168,7 @@ const addMember = async () => {
 // 删除成员
 const deleteMember = async (memberId) => {
   try {
-    await request.delete(`/api/projects/${projectId}/team/${memberId}`)
+    await request.delete(`/project/info/${projectId}/team/${memberId}`)
     members.value = members.value.filter(m => m.id !== memberId)
     project.teamCount--
     totalMembers.value--

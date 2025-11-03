@@ -13,7 +13,6 @@
           </el-button>
         </div>
 
-        <!-- 拖拽任务区域 -->
         <draggable
             v-model="column.tasks"
             group="tasks"
@@ -21,7 +20,7 @@
             class="task-list"
             animation="200"
             ghost-class="drag-ghost"
-            @end="onDragEnd"
+            @end="onTaskDragEnd"
         >
           <template #item="{ element }">
             <el-card class="task-card" :style="{ background: getTaskColor(element.status) }">
@@ -30,16 +29,13 @@
                 <p class="task-desc">{{ element.description }}</p>
                 <p class="task-assigneer">责任人: {{ element.assigneer }}</p>
                 <p class="task-workingHour">工时: {{ element.workingHour }}</p>
-                <el-button
-                    type="danger"
-                    size="small"
-                    text
-                    class="delete-btn"
-                    @click="deleteTaskItem(element.id, column.key)"
-                >
-                  删除
-                </el-button>
               </div>
+              <el-button
+                  type="danger"
+                  size="mini"
+                  class="delete-task-btn"
+                  @click="deleteTask(element)"
+              >删除</el-button>
             </el-card>
           </template>
         </draggable>
@@ -53,12 +49,7 @@
           <el-input v-model="newTask.title" placeholder="请输入任务名称" />
         </el-form-item>
         <el-form-item label="任务描述" prop="description">
-          <el-input
-              type="textarea"
-              v-model="newTask.description"
-              placeholder="请输入任务描述"
-              :rows="3"
-          />
+          <el-input type="textarea" v-model="newTask.description" placeholder="请输入任务描述" :rows="3"/>
         </el-form-item>
         <el-form-item label="责任人" prop="assigneer">
           <el-input v-model="newTask.assigneer" placeholder="请输入责任人" />
@@ -78,17 +69,15 @@
 <script setup>
 import { reactive, ref, onMounted } from 'vue'
 import draggable from 'vuedraggable'
-import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getTasksApi, addTaskApi, updateTaskApi, deleteTaskApi } from '@/api/task'
+import request from '@/utils/request'
 
-const route = useRoute()
-const projectId = route.params.id
+const projectId = 1 // 这里可以改成动态路由获取
 
 const columns = reactive([
-  { key: 'backlog', title: 'Backlog', tasks: [] },
   { key: 'todo', title: 'To-Do', tasks: [] },
   { key: 'inprocess', title: 'In-Process', tasks: [] },
+  { key: 'codereview', title: 'codeReview', tasks: [] },
   { key: 'done', title: 'Done', tasks: [] }
 ])
 
@@ -97,96 +86,105 @@ const currentColumnKey = ref(null)
 const newTask = reactive({ title: '', description: '', assigneer: '', workingHour: '' })
 const taskFormRef = ref(null)
 
-// ✅ 页面加载时获取任务列表
-onMounted(async () => {
-  await loadTasks()
-})
-
-const loadTasks = async () => {
-  try {
-    const res = await getTasksApi(projectId)
-    const tasks = res.data || []
-    columns.forEach(col => {
-      col.tasks = tasks.filter(task => task.status === col.key)
-    })
-  } catch (e) {
-    console.error('加载任务失败', e)
-  }
-}
-
-// ✅ 打开新增任务弹窗
+// 打开新增任务弹窗
 const openAddTaskDialog = (columnKey) => {
   currentColumnKey.value = columnKey
   Object.assign(newTask, { title: '', description: '', assigneer: '', workingHour: '' })
   addTaskDialogVisible.value = true
 }
 
-// ✅ 新增任务
+// 获取任务列表
+const fetchTasks = async () => {
+  try {
+    const res = await request.get(`/kanban/tasks`, { params: { projectId } })
+    columns.forEach(c => c.tasks = [])
+    res.data.forEach(task => {
+      const col = columns.find(c => c.key === task.status)
+      if (col) col.tasks.push(task)
+    })
+  } catch (err) {
+    console.error(err)
+    ElMessage.error('获取任务失败')
+  }
+}
+
+// 新增任务
 const addTask = async () => {
   if (!newTask.title || !newTask.description || !newTask.assigneer || !newTask.workingHour) {
     ElMessage.warning('请填写完整任务信息')
     return
   }
-
   try {
-    const { data } = await addTaskApi(projectId, {
+    const res = await request.post(`/kanban/tasks`, {
       ...newTask,
-      status: currentColumnKey.value
+      status: currentColumnKey.value,
+      projectId
     })
-    const column = columns.find(c => c.key === currentColumnKey.value)
-    if (column) column.tasks.push(data)
+    const col = columns.find(c => c.key === currentColumnKey.value)
+    if (col) col.tasks.push(res.data)
     addTaskDialogVisible.value = false
-    ElMessage.success('任务创建成功')
-  } catch (e) {
-    ElMessage.error('创建任务失败')
+    ElMessage.success('任务添加成功')
+  } catch (err) {
+    console.error(err)
+    ElMessage.error('添加任务失败')
   }
 }
 
-// ✅ 拖拽任务后更新状态
-const onDragEnd = async (event) => {
+// 删除任务
+const deleteTask = async (task) => {
   try {
-    const movedTask = event.item.__vueParentComponent.props.element
-    const newColumnEl = event.to.closest('.kanban-column')
-    if (!newColumnEl) return
-
-    const newColumnKey = newColumnEl.__vnode.key
-    if (movedTask.status !== newColumnKey) {
-      movedTask.status = newColumnKey
-      await updateTaskApi(movedTask.id, { status: newColumnKey })
+    await ElMessageBox.confirm(`确定删除任务 "${task.title}" 吗？`, '删除确认', {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    await request.delete(`/kanban/tasks/${task.id}`)
+    // 从前端列表移除
+    const col = columns.find(c => c.key === task.status)
+    if (col) {
+      col.tasks = col.tasks.filter(t => t.id !== task.id)
     }
-  } catch (e) {
-    console.error('任务状态更新失败', e)
+    ElMessage.success('任务删除成功')
+  } catch (err) {
+    if (err !== 'cancel') {
+      console.error(err)
+      ElMessage.error('删除任务失败')
+    }
   }
 }
 
-// ✅ 删除任务
-const deleteTaskItem = (id, columnKey) => {
-  ElMessageBox.confirm('确认删除该任务吗？', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(async () => {
+// 拖拽结束
+const onTaskDragEnd = async (evt) => {
+  const movedTask = evt.item.__vue__.element
+  const newStatus = evt.to.__vue__.column.key
+  if (movedTask.status !== newStatus) {
+    movedTask.status = newStatus
     try {
-      await deleteTaskApi(id)
-      const column = columns.find(c => c.key === columnKey)
-      column.tasks = column.tasks.filter(t => t.id !== id)
-      ElMessage.success('删除成功')
-    } catch (e) {
-      ElMessage.error('删除失败')
+      await request.put(`/kanban/tasks/${movedTask.id}`, { status: newStatus })
+      ElMessage.success('任务状态更新成功')
+    } catch (err) {
+      console.error(err)
+      ElMessage.error('更新任务状态失败')
+      fetchTasks() // 回退前端状态
     }
-  }).catch(() => {})
+  }
 }
 
-// ✅ 任务卡片颜色
+// 获取任务颜色
 const getTaskColor = (status) => {
   switch (status) {
-    case 'backlog': return '#fef6f6'
     case 'todo': return '#e6f7ff'
     case 'inprocess': return '#fffbe6'
+    case 'codereview': return '#fff0f6'
     case 'done': return '#f6ffed'
     default: return '#f0f2f5'
   }
 }
+
+// 初始化
+onMounted(() => {
+  fetchTasks()
+})
 </script>
 
 <style scoped>
@@ -230,15 +228,23 @@ const getTaskColor = (status) => {
   overflow-y: auto;
 }
 .task-card {
+  position: relative;
   padding: 12px;
   border-radius: 10px;
   cursor: grab;
   transition: all 0.2s;
-  position: relative;
 }
 .task-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.task-card-content {
+  margin-bottom: 6px;
+}
+.delete-task-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
 }
 .task-title {
   font-weight: 600;
@@ -249,12 +255,6 @@ const getTaskColor = (status) => {
   font-size: 14px;
   color: #606266;
   margin: 2px 0;
-}
-.delete-btn {
-  position: absolute;
-  top: 6px;
-  right: 8px;
-  color: #f56c6c;
 }
 .drag-ghost {
   opacity: 0.5;

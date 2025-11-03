@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 获取任务列表
 export function getTasksApi(projectId) {
     return request({
-        url: `/api/projects/${projectId}/tasks`,
+        url: `/kanban/tasks?projectId=${projectId}`,
         method: 'get'
     })
 }
