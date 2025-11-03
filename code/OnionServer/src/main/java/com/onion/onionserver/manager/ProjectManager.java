@@ -10,7 +10,6 @@ import java.util.List;
 
 @Component
 public class ProjectManager {
-
     private final ProjectRepo projectRepo;
 
     public ProjectManager(ProjectRepo projectRepo) {
@@ -23,8 +22,8 @@ public class ProjectManager {
         project.setDescription(dto.getDescription());
         project.setExpectedCompletion(dto.getExpectedCompletion());
         project.setOwnerId(ownerId);
-        project.setCreateAt(LocalDateTime.now());
-        project.setUpdateAt(LocalDateTime.now());
+        project.setCreatedAt(LocalDateTime.now());
+        project.setUpdatedAt(LocalDateTime.now());
         return projectRepo.save(project);
     }
 

@@ -1,44 +1,28 @@
 package com.onion.onionserver.model.dao;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.Data;
 
-import java.io.Serializable;
-import java.time.LocalDateTime;
-
+@Data
 @Entity
-@Getter
-@Setter
-@ToString
-@Table(name="project_member")
+@Table(name = "project_member")
 public class ProjectMember {
-    @Embeddable
-    public static class ProjectMemberPK implements Serializable {
-        private Long user_id;
-        private Long project_id;
-    }
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @EmbeddedId
-    private ProjectMemberPK id;
+    @Column(name = "project_id", nullable = false)
+    private Long projectId;
 
-    @Column(name = "role", nullable = false)
-    private int role;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
-    @Column(name = "create_at", nullable = false)
-    private LocalDateTime createAt;
+    @Column(nullable = false)
+    private String role;
 
-    @Column(name = "update_at", nullable = false)
-    private LocalDateTime updateAt;
+    @Column
+    private String status;
 
-    @ManyToOne
-    @MapsId("project_id")
-    @JoinColumn(name = "project_id", nullable = false)
-    private Project project;
-
-    @ManyToOne
-    @MapsId("user_id")
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @Column(name = "working_hour")
+    private String workingHour;
 }

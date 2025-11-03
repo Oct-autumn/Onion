@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "project")
 public class Project {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -20,7 +19,7 @@ public class Project {
     private String description;
 
     @Column(name = "expected_completion")
-    private String expectedCompletion; // SQLite 用 TEXT 存时间
+    private String expectedCompletion; // SQLite TEXT
 
     @Column(name = "owner_id", nullable = false)
     private Long ownerId;

@@ -6,5 +6,5 @@ import lombok.Data;
 public class ProjectCreateDTO {
     private String name;
     private String description;
-    private String expectedCompletion; // 用字符串接收
+    private String expectedCompletion;
 }

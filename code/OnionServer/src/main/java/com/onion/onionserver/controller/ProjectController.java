@@ -1,30 +1,33 @@
 package com.onion.onionserver.controller;
 
+import com.onion.onionserver.manager.ProjectManager;
 import com.onion.onionserver.model.dao.Project;
 import com.onion.onionserver.model.dto.ProjectCreateDTO;
 import com.onion.onionserver.model.dto.ProjectResponseDTO;
-import com.onion.onionserver.service.ProjectService;
+import com.onion.onionserver.util.JwtTools;
+import io.jsonwebtoken.Claims;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/project")
 public class ProjectController {
 
-    private final ProjectService projectService;
+    private final ProjectManager projectManager;
+    private final JwtTools jwtTools;
 
-    public ProjectController(ProjectService projectService) {
-        this.projectService = projectService;
+    public ProjectController(ProjectManager projectManager, JwtTools jwtTools) {
+        this.projectManager = projectManager;
+        this.jwtTools = jwtTools;
     }
 
-    // 创建项目
     @PostMapping("/create")
-    public ResponseEntity<ProjectResponseDTO> create(@RequestBody ProjectCreateDTO dto) {
-        Long ownerId = 1L; // TODO: 从 token 解析
-        Project saved = projectService.createProject(dto, ownerId);
+    public ResponseEntity<ProjectResponseDTO> create(@RequestHeader("Authorization") String authorization,
+                                                     @RequestBody ProjectCreateDTO dto) {
+        Long ownerId = extractUserId(authorization);
+        Project saved = projectManager.createProject(dto, ownerId);
 
         ProjectResponseDTO resp = new ProjectResponseDTO();
         resp.setProjectId(saved.getId());
@@ -32,14 +35,12 @@ public class ProjectController {
         resp.setDescription(saved.getDescription());
         resp.setExpectedCompletion(saved.getExpectedCompletion());
         resp.setOwnerId(saved.getOwnerId());
-
         return ResponseEntity.ok(resp);
     }
 
-    // 查询项目列表
     @PostMapping("/list")
     public ResponseEntity<List<ProjectResponseDTO>> list() {
-        List<ProjectResponseDTO> resp = projectService.listProjects().stream().map(p -> {
+        List<ProjectResponseDTO> resp = projectManager.listProjects().stream().map(p -> {
             ProjectResponseDTO dto = new ProjectResponseDTO();
             dto.setProjectId(p.getId());
             dto.setName(p.getName());
@@ -47,14 +48,13 @@ public class ProjectController {
             dto.setExpectedCompletion(p.getExpectedCompletion());
             dto.setOwnerId(p.getOwnerId());
             return dto;
-        }).collect(Collectors.toList());
+        }).toList();
         return ResponseEntity.ok(resp);
     }
 
-    // 查询单个项目详情
     @GetMapping("/info/{id}")
     public ResponseEntity<ProjectResponseDTO> info(@PathVariable Long id) {
-        Project p = projectService.getProject(id);
+        Project p = projectManager.getProject(id);
         ProjectResponseDTO dto = new ProjectResponseDTO();
         dto.setProjectId(p.getId());
         dto.setName(p.getName());
@@ -62,5 +62,19 @@ public class ProjectController {
         dto.setExpectedCompletion(p.getExpectedCompletion());
         dto.setOwnerId(p.getOwnerId());
         return ResponseEntity.ok(dto);
+    }
+
+    // ---- helpers ----
+
+    private Long extractUserId(String authorization) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            throw new RuntimeException("Authorization header missing or invalid");
+        }
+        String token = authorization.substring("Bearer ".length()).trim();
+        Claims claims = jwtTools.verifyToken(token);
+        if (claims == null) {
+            throw new RuntimeException("Invalid or expired token");
+        }
+        return JwtTools.getUserIdFromClaims(claims);
     }
 }
