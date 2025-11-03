@@ -35,3 +35,14 @@ CREATE TABLE project_member (
                                 FOREIGN KEY (project_id) REFERENCES project(id),
                                 FOREIGN KEY (user_id) REFERENCES user(id)
 );
+
+-- requirement 表
+CREATE TABLE requirement (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    assigner_id INTEGER FOREIGN KEY REFERENCES user(id),
+    working_hour INTEGER NOT NULL,
+    status TEXT NOT NULL,
+    project_id INTEGER FOREIGN KEY REFERENCES project(id)
+);
