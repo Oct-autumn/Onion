@@ -1,6 +1,7 @@
 <template>
   <div class = "charts-container">
-    <div ref="burndownChartRef" class="chart"></div>
+	<div ref="taskPieChartRef" class="chart"></div>
+    <div ref="burndownChartRef" class="chart" style="display: none;"></div>
     <div ref="contributionChartRef" class="chart"></div>
   </div>
 </template>
@@ -12,15 +13,21 @@ import {onMounted, ref} from 'vue'
 // Chart references
 const burndownChartRef = ref(null)
 const contributionChartRef = ref(null)
+const taskPieChartRef = ref(null)
 
 // Chart instances
 let burndownChartInstance = null
 let contributionChartInstance = null
+let taskPieChartRefInstance = null
 
 const initCharts = () => {
 
   // TODO: Fetch Data from API (dummy data for now)
   const chartData = {
+	taskPie: {
+	  xAxis: ['To-Do', 'In-Process', 'Code Review', 'Completed'],
+	  yAxis: [5, 3, 4, 7]
+	},
     burndown: {
       xAxis: ['Sprint 1', 'Sprint 2', 'Sprint 3', 'Sprint 4', 'Sprint 5'],
       yAxis: [500, 430, 280, 200, 120]
@@ -30,6 +37,28 @@ const initCharts = () => {
       yAxis: [12, 18, 15, 5, 8, 11]
     }
   }
+
+  // Pie Chart
+  taskPieChartRefInstance = echarts.init(taskPieChartRef.value)
+	taskPieChartRefInstance.setOption({
+	  title: {
+		text: 'Task Distribution'
+	  },
+	  tooltip: {
+		trigger: 'item'
+	  },
+	  series: [
+		{
+		  name: 'Tasks',
+		  type: 'pie',
+		  radius: '70%',
+		  data: chartData.taskPie.xAxis.map((name, index) => ({
+			name: name,
+			value: chartData.taskPie.yAxis[index]
+		  })),
+		}
+	  ]
+	});
 
   // Burndown Chart
   burndownChartInstance = echarts.init(burndownChartRef.value)
@@ -88,6 +117,7 @@ const initCharts = () => {
 
 // Handle window resize
 const handleResize = () => {
+  taskPieChartRefInstance?.resize()
   burndownChartInstance?.resize()
   contributionChartInstance?.resize()
 }
