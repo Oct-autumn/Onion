@@ -70,9 +70,6 @@
             <el-option label="已完成" value="已完成"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="负责人" prop="owner">
-          <el-input v-model="newProjectForm.owner" placeholder="请输入负责人姓名" />
-        </el-form-item>
         <el-form-item label="计划完成时间" prop="planDate">
           <el-date-picker
               v-model="newProjectForm.planDate"
@@ -118,8 +115,7 @@ const showAddProjectDialog = ref(false)
 const newProjectForm = ref({
   name: '',
   status: '',
-  owner: '',
-  planDate: ''
+  planDate: '',
 })
 
 // Form validation rules
@@ -129,9 +125,6 @@ const formRules = {
   ],
   status: [
     { required: true, message: '请选择项目状态', trigger: 'change' }
-  ],
-  owner: [
-    { required: true, message: '请输入负责人', trigger: 'blur' }
   ],
   planDate: [
     { required: true, message: '请选择计划完成时间', trigger: 'change' }
@@ -258,8 +251,7 @@ const handleDialogClose = () => {
   newProjectForm.value = {
     name: '',
     status: '',
-    owner: '',
-    planDate: ''
+    planDate: '',
   }
 }
 
