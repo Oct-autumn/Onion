@@ -8,6 +8,7 @@ import RegisterView from '../views/RegisterView.vue'
 import ProjectDetailLayout from '../views/project/ProjectDetailLayout.vue'
 import ProjectInfoView from '../views/project/ProjectInfoView.vue'
 import KanbanView from '../views/project/KanbanView.vue'
+import ChartView from '../views/project/ChartView.vue'
 
 const routes = [
   {
@@ -37,6 +38,7 @@ const routes = [
           { path: '', redirect: 'info' },
           { path: 'info', name: 'project-info', component: ProjectInfoView },
           { path: 'kanban', name: 'project-kanban', component: KanbanView,props: true},
+		  { path: 'chart', name: 'project-chart', component: ChartView },
         ],
       },
     ],
