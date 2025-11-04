@@ -17,9 +17,9 @@ public class Requirement {
     @Column(name = "description")
     private String description;
 
-    //TODO: foreign key?
-    @Column(name = "assigner_id", nullable = false)
-    private Long assignerId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigner_id", nullable = false)
+    private User assigner;
 
     @Column(name = "working_hour", nullable = false)
     private Short workingHour;
@@ -28,7 +28,7 @@ public class Requirement {
     @Column(name = "status", nullable = false)
     private String status;
 
-    //TODO: foreign key?
-    @Column(name = "project_id", nullable = false)
-    private Long projectId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_id", nullable = false)
+    private Project project;
 }
