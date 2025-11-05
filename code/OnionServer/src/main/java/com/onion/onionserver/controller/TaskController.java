@@ -52,7 +52,7 @@ public class TaskController {
             return ResponseEntity.badRequest().body(new UtilDTO.ErrorResponse(1, "bad requirement id"));
         }
         requirement.setStatus(statusDTO.getStatus());
-        //FIXME: 要save()吗？不确定，要测试
+        requirementRepo.save(requirement);
         //TODO: 这个API返回什么？任务目前的status？还是"success"?
         return ResponseEntity.ok(statusDTO);
     }
