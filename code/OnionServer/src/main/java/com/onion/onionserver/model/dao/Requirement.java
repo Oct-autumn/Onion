@@ -1,6 +1,11 @@
 package com.onion.onionserver.model.dao;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.Data;
 
 @Data
@@ -17,9 +22,9 @@ public class Requirement {
     @Column(name = "description")
     private String description;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assigner_id", nullable = false)
-    private User assigner;
+    //TODO: foreign key?
+    @Column(name = "assigner_id", nullable = false)
+    private Long assignerId;
 
     @Column(name = "working_hour", nullable = false)
     private Float workingHour;
@@ -28,7 +33,7 @@ public class Requirement {
     @Column(name = "status", nullable = false)
     private String status;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "project_id", nullable = false)
-    private Project project;
+    //TODO: foreign key?
+    @Column(name = "project_id", nullable = false)
+    private Long projectId;
 }
