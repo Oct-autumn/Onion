@@ -22,7 +22,7 @@ public class Requirement {
     private User assigner;
 
     @Column(name = "working_hour", nullable = false)
-    private Short workingHour;
+    private Float workingHour;
 
     //TODO: 只有有限种取值？要用什么类型
     @Column(name = "status", nullable = false)

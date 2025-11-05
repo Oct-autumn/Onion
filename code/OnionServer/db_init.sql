@@ -42,7 +42,7 @@ CREATE TABLE requirement (
     title TEXT NOT NULL,
     description TEXT NOT NULL,
     assigner_id INTEGER FOREIGN KEY REFERENCES user(id),
-    working_hour INTEGER NOT NULL,
+    working_hour REAL NOT NULL,
     status TEXT NOT NULL,
     project_id INTEGER FOREIGN KEY REFERENCES project(id)
 );
