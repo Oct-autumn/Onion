@@ -1,17 +1,19 @@
 package com.onion.onionserver.controller;
 
-import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.onion.onionserver.model.dao.Requirement;
 import com.onion.onionserver.model.dto.RequirementCreateDTO;
+import com.onion.onionserver.model.dto.RequirementStatusDTO;
+import com.onion.onionserver.model.dto.UtilDTO;
 import com.onion.onionserver.repo.RequirementRepo;
 
 @RestController
@@ -37,7 +39,22 @@ public class TaskController {
         requirement.setWorkingHour(parseWorkingHourString(dto.getWorkingHour()));
         requirementRepo.save(requirement);
 
-        return ResponseEntity.ok(Map.of("status", dto.getStatus()));
+        return ResponseEntity.ok(new RequirementStatusDTO(requirement.getStatus()));
+    }
+
+    @PutMapping("/kanban/tasks/{id}")
+    public ResponseEntity<?> updateTaskStatus(
+            @PathVariable(name = "id") long requirementId,
+            @RequestBody RequirementStatusDTO statusDTO)
+    {
+        Requirement requirement = requirementRepo.findById(requirementId).orElse(null);
+        if (requirement == null) {
+            return ResponseEntity.badRequest().body(new UtilDTO.ErrorResponse(1, "bad requirement id"));
+        }
+        requirement.setStatus(statusDTO.getStatus());
+        //FIXME: 要save()吗？不确定，要测试
+        //TODO: 这个API返回什么？任务目前的status？还是"success"?
+        return ResponseEntity.ok(statusDTO);
     }
 
     private float parseWorkingHourString(String str) {
