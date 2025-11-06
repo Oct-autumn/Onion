@@ -8,7 +8,14 @@
 
 <script setup>
 import * as echarts from 'echarts'
-import {onMounted, ref} from 'vue'
+import { ElMessage } from 'element-plus'
+import { onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
+import request from '@/utils/request'
+
+const route = useRoute()
+const projectId = route.params.id
+
 
 // Chart references
 const burndownChartRef = ref(null)
@@ -20,25 +27,71 @@ let burndownChartInstance = null
 let contributionChartInstance = null
 let taskPieChartRefInstance = null
 
-const initCharts = () => {
+// Chart data
+let taskStatuses = []
+let taskCount = []
+let membersName = []
+let membersWorkingHour = []
 
-  // TODO: Fetch Data from API (dummy data for now)
-  const chartData = {
-	taskPie: {
-	  xAxis: ['To-Do', 'In-Process', 'Code Review', 'Completed'],
-	  yAxis: [5, 3, 4, 7]
-	},
-    burndown: {
-      xAxis: ['Sprint 1', 'Sprint 2', 'Sprint 3', 'Sprint 4', 'Sprint 5'],
-      yAxis: [500, 430, 280, 200, 120]
-    },
-    contribution: {
-      xAxis: ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve', 'Frank'],
-      yAxis: [12, 18, 15, 5, 8, 11]
-    }
+const dummyMembersRes = {
+  data: [
+	{name: 'Alice', workingHour: '10'},
+	{name: 'Bob', workingHour: '5',},
+	{name: 'Charlie', workingHour: '15',},
+  ]
+}
+
+const dummyTaskRes = {
+  data: [
+    { id: 1, title: 'Task 1', status: 'todo' },
+    { id: 2, title: 'Task 2', status: 'in-progress' },
+    { id: 3, title: 'Task 3', status: 'todo' },
+    { id: 4, title: 'Task 4', status: 'code review' },
+    { id: 5, title: 'Task 5', status: 'in-progress' },
+    { id: 6, title: 'Task 6', status: 'todo' },
+    { id: 7, title: 'Task 7', status: 'completed' },
+  ]
+};
+
+
+const fetchMembers = async () => {
+  try {
+    const res = await request.get(`/project/info/${projectId}/team`)
+    //const res = dummyMembersRes
+    
+    membersName = res.data.map(member => member.name)  // Added .data
+    membersWorkingHour = res.data.map(member => member.workingHour)  // Added .data
+  } catch (err) {
+    console.error(err)
+    ElMessage.error('网络错误，获取团队成员失败')
+  } 
+}
+
+const fetchProjectTasks = async () => {
+  try {
+    const res = await request.get(`/kanban/tasks`, { params: { projectId } })
+	//const res = dummyTaskRes;
+	
+	// Group tasks by status and count them
+	const statusCountMap = res.data.reduce((acc, task) => {
+	  acc[task.status] = (acc[task.status] || 0) + 1;
+	  return acc;
+	}, {});
+
+	// Create two arrays: one for statuses and one for counts
+	taskStatuses = Object.keys(statusCountMap);
+	taskCount = Object.values(statusCountMap);
+  } catch (err) {
+    console.error(err)
+    ElMessage.error('获取任务失败')
   }
+}
 
-  // Pie Chart
+const initCharts = () => {
+  fetchProjectTasks()
+  fetchMembers()
+
+  // Pie Chart for task distribution
   taskPieChartRefInstance = echarts.init(taskPieChartRef.value)
 	taskPieChartRefInstance.setOption({
 	  title: {
@@ -51,10 +104,10 @@ const initCharts = () => {
 		{
 		  name: 'Tasks',
 		  type: 'pie',
-		  radius: '70%',
-		  data: chartData.taskPie.xAxis.map((name, index) => ({
+		  radius: '60%',
+		  data: taskStatuses.map((name, index) => ({
 			name: name,
-			value: chartData.taskPie.yAxis[index]
+			value: taskCount[index]
 		  })),
 		}
 	  ]
@@ -72,7 +125,7 @@ const initCharts = () => {
     xAxis: {
       type: 'category',
       boundaryGap: true,
-      data: chartData.burndown.xAxis,
+      data: ['Sprint 1', 'Sprint 2', 'Sprint 3', 'Sprint 4', 'Sprint 5']
     },
     yAxis: {
       type: 'value',
@@ -85,7 +138,7 @@ const initCharts = () => {
         name: 'Credits',
         type: 'line',
         stack: 'Total',
-        data: chartData.burndown.yAxis,
+        data: [500, 430, 280, 200, 120]
       },
     ]
   });
@@ -98,7 +151,7 @@ const initCharts = () => {
     },
     xAxis: {
       type: 'category',
-      data: chartData.contribution.xAxis,
+      data: membersName
     },
     yAxis: {
       type: 'value',
@@ -107,7 +160,7 @@ const initCharts = () => {
       nameGap: 30  // Distance from axis
     },         
     series: [{
-      data: chartData.contribution.yAxis,
+      data: membersWorkingHour,
       type: 'bar',
       name: 'Values'
     }]
