@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.onion.onionserver.model.dao.Requirement;
+import com.onion.onionserver.model.dto.ErrorResponseDTO;
 import com.onion.onionserver.model.dto.RequirementCreateDTO;
 import com.onion.onionserver.model.dto.RequirementStatusDTO;
-import com.onion.onionserver.model.dto.UtilDTO;
 import com.onion.onionserver.repo.RequirementRepo;
 
 @RestController
@@ -49,7 +49,7 @@ public class TaskController {
     {
         Requirement requirement = requirementRepo.findById(requirementId).orElse(null);
         if (requirement == null) {
-            return ResponseEntity.badRequest().body(new UtilDTO.ErrorResponse(1, "bad requirement id"));
+            return ResponseEntity.badRequest().body(ErrorResponseDTO.createFail("requirement id not found"));
         }
         requirement.setStatus(statusDTO.getStatus());
         requirementRepo.save(requirement);
