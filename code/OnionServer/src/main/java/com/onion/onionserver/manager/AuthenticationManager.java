@@ -55,6 +55,20 @@ public class AuthenticationManager {
         }
     }
 
+    public boolean verifyPassword(Long user_id, String password) {
+        UserAuth userAuth = userAuthRepo.findById(user_id).orElse(null);
+
+        if (userAuth == null) {
+            throw new EntityNotFoundException();
+        }
+
+        String hashString = HashTools.stringToSHA256(password);
+        hashString += userAuth.getSalt();
+        hashString = HashTools.stringToSHA256(hashString);
+
+        return hashString.equals(userAuth.getHash());
+    }
+
     public void updatePassword(Long user_id, String newPassword) {
         UserAuth userAuth = userAuthRepo.findById(user_id).orElse(null);
 
