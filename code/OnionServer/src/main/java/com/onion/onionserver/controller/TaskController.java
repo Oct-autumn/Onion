@@ -60,7 +60,7 @@ public class TaskController {
 
     //TODO: 换个端点
     //TODO: 以及其他问题
-    @DeleteMapping("/kanban/tasks/{id}")
+    @DeleteMapping("/task/delete/{id}")
     public ResponseEntity<?> deleteTask(@PathVariable(name = "id") long requirementId) {
         requirementRepo.deleteById(requirementId);
         return ResponseEntity.ok(ErrorResponseDTO.createSuccess());
