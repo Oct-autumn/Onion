@@ -8,4 +8,6 @@ import com.onion.onionserver.model.dao.Requirement;
 
 public interface RequirementRepo extends JpaRepository<Requirement, Long> {
     List<Requirement> findAllByProjectId(long projectId);
+
+    List<Requirement> findAllByProjectIdAndAssignerId(long projectId, long assignerId);
 }
