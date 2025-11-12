@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.onion.onionserver.model.dao.Requirement;
+import com.onion.onionserver.model.dto.RequirementStatusCountDTO;
 import com.onion.onionserver.repo.RequirementRepo;
 
 @RestController
@@ -29,8 +29,14 @@ public class DashboardController {
             @RequestParam("project_id") long projectId,
             @RequestParam("user_id") long userId)
     {
-        List<Requirement> list = requirementRepo.findAllByProjectIdAndAssignerId(projectId, userId);
-        Map<String, Long> result = countTasksByStatus(list, userContributionFields);
+        List<RequirementStatusCountDTO> list = requirementRepo.countAllStatusByProjectIdAndAssignerId(projectId, userId);
+        Map<String, Long> result = new HashMap<String, Long>();
+        for (RequirementStatusCountDTO item : list) {
+            result.put(item.getStatus(), item.getNumber());
+        }
+        for (String field : userContributionFields) {
+            result.putIfAbsent(field, 0L);
+        }
         return ResponseEntity.ok(result);
     }
 
@@ -42,23 +48,15 @@ public class DashboardController {
     public ResponseEntity<?> getProjectCompletionRate(
             @RequestParam("project_id") long projectId)
     {
-        List<Requirement> list = requirementRepo.findAllByProjectId(projectId);
-        Map<String, Long> filtered = countTasksByStatus(list, projectCompletionRateFields);
-        Map<String, Long> result = new HashMap<>();
-        filtered.forEach((k, v) -> {
-            result.put(k+"_num", v);
-        });
+        final String SUFFIX = "_num";
+        List<RequirementStatusCountDTO> list = requirementRepo.countAllStatusByProjectId(projectId);
+        Map<String, Long> result = new HashMap<String, Long>();
+        for (RequirementStatusCountDTO item : list) {
+            result.put(item.getStatus()+SUFFIX, item.getNumber());
+        }
+        for (String field : projectCompletionRateFields) {
+            result.putIfAbsent(field+SUFFIX, 0L);
+        }
         return ResponseEntity.ok(result);
-    }
-
-    private static Map<String, Long> countTasksByStatus(List<Requirement> tasks, Iterable<String> allowedStatus) {
-        Map<String, Long> result = new HashMap<>();
-        for (String field : allowedStatus) {
-            result.put(field, 0L);
-        }
-        for (Requirement requirement : tasks) {
-            result.computeIfPresent(requirement.getStatus(), (k, v) -> v+1);
-        }
-        return result;
     }
 }
