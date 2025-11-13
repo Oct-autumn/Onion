@@ -97,6 +97,7 @@ import { useRouter } from 'vue-router'
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
+const projectFormRef = ref()
 const router = useRouter()
 
 // Pagination variables
@@ -202,8 +203,7 @@ const dummyProjects = [
 const fetchProjects = async () => {
   loading.value = true
   try {
-    // use real API later
-    /*
+
     const res = await request.get('/project/list', {
       params: { 
         page: currentPage.value, 
@@ -212,13 +212,6 @@ const fetchProjects = async () => {
     })
     projects.value = res.data.projects
     totalProjects.value = res.data.total
-    */
-    
-    // Local testing implementation
-    const startIndex = (currentPage.value - 1) * numProjectsPerPage.value
-    const endIndex = startIndex + numProjectsPerPage.value
-    projects.value = dummyProjects.slice(startIndex, endIndex)
-    totalProjects.value = dummyProjects.length
     
   } catch (err) {
     console.error(err)
@@ -256,16 +249,48 @@ const handleDialogClose = () => {
 }
 
 // Submit new project
-const submitNewProject = () => {
-  // TODO: add API call
-  
-  ElMessage.success('项目添加成功！')
-  
-  // Close dialog and reset form
-  handleDialogClose()
-  
-  // Refresh the project list
-  fetchProjects()
+const submitNewProject = async () => {
+  // Validate form first
+  projectFormRef.value.validate(async (valid) => {
+    if (valid) {
+      try {
+        const projectData = {
+          name: newProjectForm.name,
+          status: newProjectForm.status,
+          planDate: newProjectForm.planDate
+        }
+
+        // Make API call to create new project
+        const response = await fetch('/api/project', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(projectData)
+        })
+
+        if (response.ok) {
+          ElMessage.success('Project created successfully.')
+          
+          // Close dialog and reset form
+          handleDialogClose()
+          
+          // Refresh the project list
+          fetchProjects()
+        } else {
+          const errorData = await response.json()
+          console.error('Error creating project:', errorData)
+          ElMessage.error('Failed to create project')
+        }
+      } catch (error) {
+        console.error('Network error creating project:', error)
+        ElMessage.error('Failed to create project')
+      }
+    } else {
+      ElMessage.error('Please fill in all required fields')
+      return false
+    }
+  })
 }
 
 // Fetch projects when component mounts
