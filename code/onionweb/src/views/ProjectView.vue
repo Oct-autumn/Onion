@@ -1,23 +1,22 @@
 <template>
   <el-card>
     <div class="header">
-      <h2>项目列表</h2>
+      <h2>Projects Overview</h2>
       <el-button type="primary" @click="showAddProjectDialog = true">
-        添加新项目
+        New Project
       </el-button>
     </div>
 
     <el-table
         :data="projects"
-        style="width: 100%"
+        style="width: 100%; margin: 0 auto;"
         stripe
         border
         v-loading="loading"
     >
       <el-table-column
           prop="name"
-          label="项目名称"
-          width="200"
+          label="Project Title"
       >
         <template #default="{ row }">
           <el-link type="primary" @click="goToProject(row.id)">
@@ -25,10 +24,10 @@
           </el-link>
         </template>
       </el-table-column>
-      <el-table-column prop="status" label="项目状态" width="120"/>
-      <el-table-column prop="owner" label="负责人" width="120"/>
-      <el-table-column prop="createDate" label="创建日期" width="150"/>
-      <el-table-column prop="planDate" label="计划完成时间" width="150"/>
+      <el-table-column prop="status" label="Status" />
+      <el-table-column prop="owner" label="Project Owner" />
+      <el-table-column prop="createDate" label="Create date" />
+      <el-table-column prop="planDate" label="Expected Completion Date"/>
     </el-table>
 
     <!-- Pagination section -->
@@ -36,7 +35,7 @@
       <div class="page-size-select">
         <span>每页显示：</span>
         <el-select v-model="numProjectsPerPage" size="small" style="width: 80px; margin: 0 10px;" @change="handlePageSizeChange">
-          <el-option label="2" :value="2"></el-option>
+          <el-option label="5" :value="5"></el-option>
           <el-option label="10" :value="10"></el-option>
           <el-option label="20" :value="20"></el-option>
         </el-select>
@@ -55,26 +54,26 @@
     <!-- Add Project Dialog -->
     <el-dialog
         v-model="showAddProjectDialog"
-        title="添加新项目"
-        width="500px"
+        title="Create New Project"
+        width="550px"
         :before-close="handleDialogClose"
     >
-      <el-form :model="newProjectForm" :rules="formRules" ref="projectFormRef" label-width="150px">
-        <el-form-item label="项目名称" prop="name">
-          <el-input v-model="newProjectForm.name" placeholder="请输入项目名称" />
+      <el-form :model="newProjectForm" :rules="formRules" ref="projectFormRef" label-width="250px">
+        <el-form-item label="Project Title" prop="name">
+          <el-input v-model="newProjectForm.name" placeholder="New project" />
         </el-form-item>
-        <el-form-item label="项目状态" prop="status">
-          <el-select v-model="newProjectForm.status" placeholder="请选择项目状态" style="width: 100%">
+        <el-form-item label="Status" prop="status">
+          <el-select v-model="newProjectForm.status" placeholder="Please select" style="width: 100%">
             <el-option label="未开始" value="未开始"></el-option>
             <el-option label="进行中" value="进行中"></el-option>
             <el-option label="已完成" value="已完成"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="计划完成时间" prop="planDate">
+        <el-form-item label="Expected Completion Date" prop="planDate">
           <el-date-picker
               v-model="newProjectForm.planDate"
               type="date"
-              placeholder="选择日期"
+              placeholder="Pick a date"
               format="YYYY-MM-DD"
               value-format="YYYY-MM-DD"
               style="width: 100%"
@@ -83,8 +82,8 @@
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="handleDialogClose">取消</el-button>
-          <el-button type="primary" @click="submitNewProject">确定</el-button>
+          <el-button @click="handleDialogClose">Cancel</el-button>
+          <el-button type="primary" @click="submitNewProject">Confirm</el-button>
         </span>
       </template>
     </el-dialog>
@@ -102,7 +101,7 @@ const router = useRouter()
 
 // Pagination variables
 const currentPage = ref(1)
-const numProjectsPerPage = ref(2)
+const numProjectsPerPage = ref(5)
 const totalProjects = ref(0)
 const loading = ref(false)
 
@@ -133,72 +132,26 @@ const formRules = {
 }
 
 // Local dummy test projects data
-const dummyProjects = [
-  {
-    id: 1,
-    name: 'AI 图像识别系统',
-    status: '进行中',
-    owner: '张三',
-    createDate: '2025-10-10',
-    planDate: '2025-12-30'
-  },
-  {
-    id: 2,
-    name: '前端管理系统',
-    status: '未开始',
-    owner: '李四',
-    createDate: '2025-09-15',
-    planDate: '2025-12-20'
-  },
-  {
-    id: 3,
-    name: '前端管理系统2',
-    status: '未开始',
-    owner: '李四',
-    createDate: '2025-09-15',
-    planDate: '2025-12-20'
-  },
-  {
-    id: 4,
-    name: '前端管理系统3',
-    status: '未开始',
-    owner: '李四',
-    createDate: '2025-09-15',
-    planDate: '2025-12-20'
-  },
-  {
-    id: 5,
-    name: '数据分析平台',
-    status: '已完成',
-    owner: '王五',
-    createDate: '2025-08-01',
-    planDate: '2025-11-15'
-  },
-  {
-    id: 6,
-    name: '移动应用开发',
-    status: '进行中',
-    owner: '赵六',
-    createDate: '2025-09-20',
-    planDate: '2026-01-30'
-  },
-  {
-    id: 7,
-    name: '云服务部署',
-    status: '进行中',
-    owner: '孙七',
-    createDate: '2025-10-05',
-    planDate: '2025-12-15'
-  },
-  {
-    id: 8,
-    name: '安全审计系统',
-    status: '未开始',
-    owner: '周八',
-    createDate: '2025-10-12',
-    planDate: '2026-02-28'
-  }
-]
+const dummyProjects = {
+  data: [
+    {
+      id: 1,
+      name: 'AI 图像识别系统',
+      status: '进行中',
+      owner: '张三',
+      createDate: '2025-10-10',
+      planDate: '2025-12-30'
+    },
+    {
+      id: 2,
+      name: '前端管理系统',
+      status: '未开始',
+      owner: '李四',
+      createDate: '2025-09-15',
+      planDate: '2025-12-20'
+    }
+  ]
+}
 
 const fetchProjects = async () => {
   loading.value = true
@@ -210,6 +163,7 @@ const fetchProjects = async () => {
         pageSize: numProjectsPerPage.value 
       }
     })
+	
     projects.value = res.data.projects
     totalProjects.value = res.data.total
     
