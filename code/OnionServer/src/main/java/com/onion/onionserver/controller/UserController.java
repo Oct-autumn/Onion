@@ -39,7 +39,14 @@ public class UserController {
      */
     @PostMapping("/register")
     @ResponseBody
-    public ResponseEntity<?> register(@RequestBody UserDTO.RegisterRequest request) {
+    public ResponseEntity<?> register(@AuthenticationPrincipal User authUser, @RequestBody UserDTO.RegisterRequest request) {
+        if (authUser.getRole() == 1) {
+            // admin注册用户时，无需指定密码，默认密码为"password123"
+            if (request.getPassword() == null) {
+                request.setPassword("password123");
+            }
+        }
+
         if (request.getEmail() == null || request.getPassword() == null || request.getUsername() == null) {
             return ResponseEntity.badRequest().body(new UtilDTO.ErrorResponse(0));
         }
