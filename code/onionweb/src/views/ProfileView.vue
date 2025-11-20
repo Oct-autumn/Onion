@@ -1,6 +1,5 @@
 <template>
     <div class="profile-view">
-      <!-- 用户基本信息卡片 -->
       <el-card class="profile-header-card">
         <div class="profile-header">
           <div class="user-avatar-section">
@@ -9,25 +8,24 @@
             </el-avatar>
           </div>
           <div class="user-info-section">
-            <h2 class="user-name">{{ currentUser?.name || '用户' }}</h2>
+            <h2 class="user-name">{{ currentUser?.name || 'User' }}</h2>
             <p class="user-email">{{ currentUser?.email || 'user@example.com' }}</p>
             <el-tag :type="getRoleType(currentUser?.role)" size="large">
-              {{ currentUser?.role || '成员' }}
+              {{ currentUser?.role || 'Member' }}
             </el-tag>
           </div>
           <div class="action-section">
             <el-button type="primary" @click="toggleEditMode">
-              {{ isEditMode ? '取消编辑' : '编辑资料' }}
+              {{ isEditMode ? 'Cancel' : 'Edit Profile' }}
             </el-button>
           </div>
         </div>
       </el-card>
   
-      <!-- 个人资料表单 -->
       <el-card class="profile-form-card">
         <template #header>
           <div class="card-header">
-            <h3>个人资料</h3>
+            <h3>Profile</h3>
           </div>
         </template>
         
@@ -41,19 +39,19 @@
         >
           <el-row :gutter="20">
             <el-col :span="12">
-              <el-form-item label="姓名" prop="name">
+              <el-form-item label="Name" prop="name">
                 <el-input
                   v-model="profileForm.name"
-                  placeholder="请输入姓名"
+                  placeholder="Enter your name"
                   clearable
                 />
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="邮箱" prop="email">
+              <el-form-item label="Email" prop="email">
                 <el-input
                   v-model="profileForm.email"
-                  placeholder="请输入邮箱"
+                  placeholder="Enter your email"
                   clearable
                 />
               </el-form-item>
@@ -62,14 +60,14 @@
   
           <el-row :gutter="20">
             <el-col :span="12">
-              <el-form-item label="角色" prop="role">
-                <el-select v-model="profileForm.role" placeholder="请选择角色" style="width: 100%">
-                  <el-option label="开发者" value="开发者" />
-                  <el-option label="测试员" value="测试员" />
-                  <el-option label="设计师" value="设计师" />
-                  <el-option label="产品经理" value="产品经理" />
-                  <el-option label="项目经理" value="项目经理" />
-                  <el-option v-if="isAdmin" label="超级管理员" value="超级管理员" />
+              <el-form-item label="Role" prop="role">
+                <el-select v-model="profileForm.role" placeholder="Select role" style="width: 100%">
+                  <el-option
+                    v-for="role in selectableRoles"
+                    :key="role"
+                    :label="role"
+                    :value="role"
+                  />
                 </el-select>
               </el-form-item>
             </el-col>
@@ -77,66 +75,64 @@
   
           <el-form-item v-if="isEditMode">
             <el-button type="primary" @click="saveProfile" :loading="loading">
-              保存更改
+              Save Changes
             </el-button>
-            <el-button @click="resetForm">重置</el-button>
+            <el-button @click="resetForm">Reset</el-button>
           </el-form-item>
         </el-form>
       </el-card>
   
-      <!-- 账户设置 -->
       <el-card class="account-settings-card">
         <template #header>
           <div class="card-header">
-            <h3>账户设置</h3>
+            <h3>Account Settings</h3>
           </div>
         </template>
         
         <div class="settings-list">
           <div class="setting-item">
             <div class="setting-info">
-              <h4>修改密码</h4>
-              <p>定期更新密码以确保账户安全</p>
+              <h4>Change Password</h4>
+              <p>Update your password regularly to keep your account secure</p>
             </div>
             <el-button type="primary" text @click="showChangePasswordDialog">
-              修改密码
+              Change Password
             </el-button>
           </div>
           
           <div class="setting-item">
             <div class="setting-info">
-              <h4>账户状态</h4>
-              <p>当前账户状态正常</p>
+              <h4>Account Status</h4>
+              <p>Your account is active</p>
             </div>
-            <el-tag type="success">正常</el-tag>
+            <el-tag type="success">Active</el-tag>
           </div>
         </div>
       </el-card>
   
-      <!-- 修改密码弹窗 -->
-      <el-dialog v-model="changePasswordDialogVisible" title="修改密码" width="500px">
+      <el-dialog v-model="changePasswordDialogVisible" title="Change Password" width="500px">
         <el-form :model="passwordForm" :rules="passwordRules" ref="passwordFormRef" label-width="100px">
-          <el-form-item label="当前密码" prop="currentPassword">
+          <el-form-item label="Current Password" prop="currentPassword">
             <el-input
               v-model="passwordForm.currentPassword"
               type="password"
-              placeholder="请输入当前密码"
+              placeholder="Enter current password"
               show-password
             />
           </el-form-item>
-          <el-form-item label="新密码" prop="newPassword">
+          <el-form-item label="New Password" prop="newPassword">
             <el-input
               v-model="passwordForm.newPassword"
               type="password"
-              placeholder="请输入新密码"
+              placeholder="Enter new password"
               show-password
             />
           </el-form-item>
-          <el-form-item label="确认密码" prop="confirmPassword">
+          <el-form-item label="Confirm Password" prop="confirmPassword">
             <el-input
               v-model="passwordForm.confirmPassword"
               type="password"
-              placeholder="请再次输入新密码"
+              placeholder="Confirm new password"
               show-password
             />
           </el-form-item>
@@ -144,75 +140,86 @@
         
         <template #footer>
           <span class="dialog-footer">
-            <el-button @click="changePasswordDialogVisible = false">取消</el-button>
-            <el-button type="primary" @click="changePassword">确定</el-button>
+            <el-button @click="changePasswordDialogVisible = false">Cancel</el-button>
+            <el-button type="primary" @click="changePassword">Confirm</el-button>
           </span>
         </template>
       </el-dialog>
     </div>
   </template>
   
-  <script setup>
-  import { ref, reactive, onMounted, computed } from 'vue'
-  import { ElMessage, ElMessageBox } from 'element-plus'
+<script setup>
+import { ref, reactive, onMounted, computed } from 'vue'
+import { ElMessage } from 'element-plus'
   
-  // 响应式数据
   const isEditMode = ref(false)
   const loading = ref(false)
   const changePasswordDialogVisible = ref(false)
   const profileFormRef = ref(null)
   const passwordFormRef = ref(null)
   
-  // 当前用户信息
-  const currentUser = ref(null)
-  const isAdmin = computed(() => {
-    const role = currentUser.value?.role
-    return role === '超级管理员' || role === 'admin' || role === '管理员'
-  })
+const currentUser = ref(null)
+const roleOptions = [
+  'Admin',
+  'Project Manager',
+  'Developer',
+  'Tester',
+  'Designer',
+  'Product Manager',
+]
+const isAdmin = computed(() => currentUser.value?.role === 'Admin')
+const selectableRoles = computed(() =>
+  isAdmin.value ? roleOptions : roleOptions.filter(role => role !== 'Admin')
+)
+const roleCodeMap = {
+  'Admin': 1,
+  'Project Manager': 2,
+  'Developer': 3,
+  'Tester': 4,
+  'Designer': 5,
+  'Product Manager': 6,
+}
   
-  // 个人资料表单
   const profileForm = reactive({
     name: '',
     email: '',
     role: ''
   })
   
-  // 密码修改表单
   const passwordForm = reactive({
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   })
   
-  // 表单验证规则
   const rules = {
     name: [
-      { required: true, message: '请输入姓名', trigger: 'blur' },
-      { min: 2, max: 10, message: '姓名长度在 2 到 10 个字符', trigger: 'blur' }
+    { required: true, message: 'Please enter your name', trigger: 'blur' },
+    { min: 2, max: 10, message: 'Name must be 2 to 10 characters', trigger: 'blur' }
     ],
     email: [
-      { required: true, message: '请输入邮箱', trigger: 'blur' },
-      { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
+    { required: true, message: 'Please enter your email', trigger: 'blur' },
+    { type: 'email', message: 'Please enter a valid email address', trigger: 'blur' }
     ],
     role: [
-      { required: true, message: '请选择角色', trigger: 'change' }
+    { required: true, message: 'Please select a role', trigger: 'change' }
     ]
   }
   
   const passwordRules = {
     currentPassword: [
-      { required: true, message: '请输入当前密码', trigger: 'blur' }
+    { required: true, message: 'Please enter current password', trigger: 'blur' }
     ],
     newPassword: [
-      { required: true, message: '请输入新密码', trigger: 'blur' },
-      { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
+    { required: true, message: 'Please enter new password', trigger: 'blur' },
+    { min: 6, message: 'Password must be at least 6 characters', trigger: 'blur' }
     ],
     confirmPassword: [
-      { required: true, message: '请确认新密码', trigger: 'blur' },
+    { required: true, message: 'Please confirm new password', trigger: 'blur' },
       {
         validator: (rule, value, callback) => {
           if (value !== passwordForm.newPassword) {
-            callback(new Error('两次输入密码不一致'))
+          callback(new Error('Passwords do not match'))
           } else {
             callback()
           }
@@ -222,35 +229,31 @@
     ]
   }
   
-  // 获取角色标签类型
   const getRoleType = (role) => {
     const roleTypes = {
-      '项目负责人': 'danger',
-      '项目经理': 'warning',
-      '开发者': 'primary',
-      '测试员': 'success',
-      '设计师': 'info',
-      '产品经理': '',
-      '超级管理员': 'danger'
+    'Admin': 'danger',
+    'Project Manager': 'warning',
+    'Developer': 'primary',
+    'Tester': 'success',
+    'Designer': 'info',
+    'Product Manager': ''
     }
     return roleTypes[role] || ''
   }
   
-  // 获取当前用户信息
   onMounted(() => {
     const userStr = localStorage.getItem('user')
     if (userStr) {
-      currentUser.value = JSON.parse(userStr)
-      // 初始化表单数据
+    const parsed = JSON.parse(userStr)
+    currentUser.value = { ...parsed }
       Object.assign(profileForm, {
-        name: currentUser.value.name || '',
-        email: currentUser.value.email || '',
-        role: currentUser.value.role || ''
+      name: currentUser.value.name || '',
+      email: currentUser.value.email || '',
+      role: currentUser.value.role || ''
       })
     }
   })
   
-  // 切换编辑模式
   const toggleEditMode = () => {
     isEditMode.value = !isEditMode.value
     if (!isEditMode.value) {
@@ -258,7 +261,6 @@
     }
   }
   
-  // 保存个人资料
   const saveProfile = async () => {
     if (!profileFormRef.value) return
     
@@ -266,41 +268,79 @@
       await profileFormRef.value.validate()
       loading.value = true
       
-      // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // 普通用户不可把角色修改为管理员
-      if (!isAdmin.value && (profileForm.role === '超级管理员' || profileForm.role === 'admin' || profileForm.role === '管理员')) {
-        ElMessage.error('无权限将角色修改为管理员')
+      if (!isAdmin.value && profileForm.role === 'Admin') {
+        ElMessage.error('You are not allowed to set the role to Admin')
         loading.value = false
         return
       }
+    
+    if (!currentUser.value?.id) {
+      ElMessage.error('Cannot determine current user information')
+      loading.value = false
+      return
+    }
 
-      // 更新本地存储
-      const updatedUser = { ...currentUser.value, ...profileForm }
-      localStorage.setItem('user', JSON.stringify(updatedUser))
-      currentUser.value = updatedUser
-      
-      ElMessage.success('个人资料更新成功')
-      isEditMode.value = false
+    const mappedRole = roleCodeMap[profileForm.role]
+    if (mappedRole === undefined) {
+      ElMessage.error('Unsupported role selected')
+      loading.value = false
+      return
+    }
+
+    const payload = {
+      username: profileForm.name.trim(),
+      email: profileForm.email.trim(),
+      role: mappedRole,
+      user_id: currentUser.value.id,
+    }
+
+    const response = await fetch('/api/user/update', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    })
+
+    let result = null
+    try {
+      result = await response.json()
+    } catch (_) {
+      result = null
+    }
+
+    if (!response.ok) {
+      ElMessage.error(result?.message || 'Failed to update profile')
+      loading.value = false
+      return
+    }
+
+    const updatedUser = {
+      ...currentUser.value,
+      name: profileForm.name.trim(),
+      email: profileForm.email.trim(),
+      role: profileForm.role,
+    }
+    localStorage.setItem('user', JSON.stringify(updatedUser))
+    currentUser.value = updatedUser
+
+    ElMessage.success('Profile updated successfully')
+    isEditMode.value = false
     } catch (error) {
-      console.log('表单验证失败:', error)
+    console.log('Profile form validation failed:', error)
     } finally {
       loading.value = false
     }
   }
   
-  // 重置表单
   const resetForm = () => {
     if (profileFormRef.value) {
       profileFormRef.value.resetFields()
     }
   }
   
-  // 显示修改密码弹窗
   const showChangePasswordDialog = () => {
     changePasswordDialogVisible.value = true
-    // 重置密码表单
     Object.assign(passwordForm, {
       currentPassword: '',
       newPassword: '',
@@ -308,20 +348,47 @@
     })
   }
   
-  // 修改密码
   const changePassword = async () => {
     if (!passwordFormRef.value) return
     
     try {
       await passwordFormRef.value.validate()
       
-      // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      ElMessage.success('密码修改成功')
+    if (!currentUser.value?.id) {
+      ElMessage.error('Cannot determine current user information')
+      return
+    }
+
+    const payload = {
+      password: passwordForm.newPassword,
+      old_password: passwordForm.currentPassword,
+      user_id: currentUser.value.id,
+    }
+
+    const response = await fetch('/api/user/change_pwd', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    })
+
+    let result = null
+    try {
+      result = await response.json()
+    } catch (_) {
+      result = null
+    }
+
+    if (!response.ok) {
+      ElMessage.error(result?.message || 'Failed to update password')
+      return
+    }
+    
+    ElMessage.success('Password updated successfully')
       changePasswordDialogVisible.value = false
     } catch (error) {
-      console.log('表单验证失败:', error)
+    console.log('Password form validation failed:', error)
     }
   }
   </script>
@@ -331,7 +398,6 @@
     padding: 20px;
   }
   
-  /* 头部卡片样式 */
   .profile-header-card {
     margin-bottom: 20px;
   }
@@ -374,7 +440,6 @@
     flex-shrink: 0;
   }
   
-  /* 卡片头部样式 */
   .card-header {
     display: flex;
     align-items: center;
@@ -388,12 +453,10 @@
     color: #303133;
   }
   
-  /* 表单样式 */
   .profile-form {
     max-width: 800px;
   }
   
-  /* 设置列表样式 */
   .settings-list {
     max-width: 600px;
   }
@@ -423,20 +486,17 @@
     color: #909399;
   }
   
-  /* 弹窗样式 */
   .dialog-footer {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
   }
   
-  /* 卡片间距 */
   .profile-form-card,
   .account-settings-card {
     margin-bottom: 20px;
   }
   
-  /* 响应式设计 */
   @media (max-width: 768px) {
     .profile-header {
       flex-direction: column;

@@ -1,7 +1,6 @@
 <template>
   <div class="login-container">
       <div class="login-wrapper">
-          <!-- Left side - Image -->
           <div class="image-section">
           <div class="image-content">
               <h1 class="welcome-title">Welcome Back</h1>
@@ -12,7 +11,6 @@
         </div>
       </div>
 
-      <!-- Right side - Login Form -->
       <div class="form-section">
         <el-card class="login-card">
           <template #header>
@@ -80,13 +78,11 @@ const router = useRouter()
 const loginFormRef = ref()
 const loading = ref(false)
 
-// Form data
 const loginForm = reactive({
   email: '',
   password: ''
 })
 
-// Form validation rules
 const rules = {
   email: [
     { required: true, message: 'Please enter your email', trigger: 'blur' },
@@ -98,7 +94,6 @@ const rules = {
   ]
 }
 
-// Submit form
 const submitForm = async () => {
   if (!loginFormRef.value) return
   
@@ -106,22 +101,6 @@ const submitForm = async () => {
     if (valid) {
       loading.value = true
       try {
-        // 测试用户验证（用于前端测试，支持管理员与普通用户）
-        const testUsers = [
-          { id: 1, name: '超级管理员', email: 'admin@onion.com', password: 'admin123', role: '超级管理员' },
-          { id: 2, name: '张三', email: 'zhangsan@example.com', password: 'pass123', role: '开发者' },
-          { id: 3, name: '李四', email: 'lisi@example.com', password: 'pass123', role: '设计师' }
-        ]
-        const matched = testUsers.find(u => u.email === loginForm.email && u.password === loginForm.password)
-        if (matched) {
-          localStorage.setItem('token', `test-token-${matched.id}`)
-          localStorage.setItem('user', JSON.stringify({ id: matched.id, name: matched.name, email: matched.email, role: matched.role }))
-          ElMessage.success('登录成功！(测试用户)')
-          router.push('/')
-          return
-        }
-
-        // Call backend API
         const response = await fetch('/api/user/login', {
           method: 'POST',
           headers: {
@@ -135,7 +114,7 @@ const submitForm = async () => {
         
         if (response.ok) {
           ElMessage.success('Login successful!')
-          router.push('/dashboard')
+          router.push('/project')
         } else {
           const error = await response.json()
           ElMessage.error(error.message || 'Login failed')
@@ -150,7 +129,6 @@ const submitForm = async () => {
   })
 }
 
-// Reset form
 const resetForm = () => {
   if (!loginFormRef.value) return
 loginFormRef.value.resetFields()

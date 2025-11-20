@@ -1,8 +1,6 @@
-<!-- /src/views/RegisterView.vue -->
 <template>
   <div class="register-container">
     <div class="register-wrapper">
-      <!-- Left side - Image -->
       <div class="image-section">
         <div class="image-content">
           <h1 class="welcome-title">Welcome to Onion</h1>
@@ -13,7 +11,6 @@
         </div>
       </div>
 
-      <!-- Right side - Registration Form -->
       <div class="form-section">
         <el-card class="register-card">
           <template #header>
@@ -99,7 +96,6 @@ const router = useRouter()
 const registerFormRef = ref()
 const loading = ref(false)
 
-// Form data
 const registerForm = reactive({
   email: '',
   username: '',
@@ -107,7 +103,6 @@ const registerForm = reactive({
   confirmPassword: ''
 })
 
-// Form validation rules
 const rules = {
   email: [
     { required: true, message: 'Please enter your email', trigger: 'blur' },
@@ -136,7 +131,6 @@ const rules = {
   ]
 }
 
-// Submit form
 const submitForm = async () => {
   if (!registerFormRef.value) return
   
@@ -144,7 +138,6 @@ const submitForm = async () => {
     if (valid) {
       loading.value = true
       try {
-        // Call backend API
         const response = await fetch('/api/user/register', {
           method: 'POST',
           headers: {
@@ -174,7 +167,6 @@ const submitForm = async () => {
   })
 }
 
-// Reset form
 const resetForm = () => {
   if (!registerFormRef.value) return
   registerFormRef.value.resetFields()
