@@ -1,47 +1,47 @@
 <template>
   <div class="project-detail-page">
-    <!-- 项目基本信息 -->
+    <!-- Project Basic Information -->
     <el-card class="project-info-card">
       <div class="project-header">
         <h2 class="project-name">{{ project.name }}</h2>
-        <p class="team-count">团队人数: {{ project.teamCount }} 人</p>
+        <p class="team-count">Team Size: {{ project.teamCount }} people</p>
       </div>
     </el-card>
 
-    <!-- 团队成员表格 -->
+    <!-- Team Members Table -->
     <el-card class="team-card" style="margin-top: 20px;">
       <template #header>
         <div class="card-header">
-          <h3>团队成员</h3>
+          <h3>Team Members</h3>
         </div>
       </template>
 
-      <!-- 添加成员按钮 -->
-      <el-button type="primary" size="small" @click="openAddMemberDialog">+ 添加成员</el-button>
+      <!-- Add Member Button -->
+      <el-button type="primary" size="small" @click="openAddMemberDialog">+ Add Member</el-button>
 
-      <!-- 表格 -->
+      <!-- Table -->
       <el-table
           :data="members"
           stripe
           style="width: 100%; margin-bottom: 16px;"
           v-loading="loading"
-          element-loading-text="加载中..."
+          element-loading-text="Loading..."
       >
-        <el-table-column prop="name" label="姓名" />
-        <el-table-column prop="status" label="状态" />
-        <el-table-column prop="workingHour" label="工时" />
-        <el-table-column prop="role" label="角色" />
-        <el-table-column label="操作" width="100">
+        <el-table-column prop="name" label="Name" />
+        <el-table-column prop="status" label="Status" />
+        <el-table-column prop="workingHour" label="Working Hours" />
+        <el-table-column prop="role" label="Role" />
+        <el-table-column label="Actions" width="100">
           <template #default="{ row }">
-            <el-button type="danger" size="mini" @click="deleteMember(row.id)">删除</el-button>
+            <el-button type="danger" size="mini" @click="deleteMember(row.id)">Delete</el-button>
           </template>
         </el-table-column>
       </el-table>
 
-      <!-- 分页器 -->
+      <!-- Pagination -->
       <div class="pagination-wrapper">
         <div class="page-size-select">
-          <span>每页显示：</span>
+          <span>Show per page:</span>
           <el-select v-model="pageSize" size="small" style="width: 80px; margin: 0 10px;" @change="handlePageSizeChange">
             <el-option label="5" :value="5"></el-option>
             <el-option label="10" :value="10"></el-option>
@@ -60,25 +60,25 @@
       </div>
     </el-card>
 
-    <!-- 新增成员弹窗 -->
-    <el-dialog title="添加成员" v-model="addMemberDialogVisible" width="400px">
+    <!-- Add Member Dialog -->
+    <el-dialog title="Add Member" v-model="addMemberDialogVisible" width="400px">
       <el-form ref="addMemberFormRef" :model="newMember" label-width="80px">
-        <el-form-item label="姓名" prop="name">
-          <el-input v-model="newMember.name" placeholder="请输入姓名" />
+        <el-form-item label="Name" prop="name">
+          <el-input v-model="newMember.name" placeholder="Please enter name" />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-input v-model="newMember.status" placeholder="请输入状态" />
+        <el-form-item label="Status" prop="status">
+          <el-input v-model="newMember.status" placeholder="Please enter status" />
         </el-form-item>
-        <el-form-item label="工时" prop="workingHour">
-          <el-input v-model="newMember.workingHour" placeholder="请输入工时" />
+        <el-form-item label="Working Hours" prop="workingHour">
+          <el-input v-model="newMember.workingHour" placeholder="Please enter working hours" />
         </el-form-item>
-        <el-form-item label="角色" prop="role">
-          <el-input v-model="newMember.role" placeholder="请输入角色" />
+        <el-form-item label="Role" prop="role">
+          <el-input v-model="newMember.role" placeholder="Please enter role" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="addMemberDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="addMember">确认</el-button>
+        <el-button @click="addMemberDialogVisible = false">Cancel</el-button>
+        <el-button type="primary" @click="addMember">Confirm</el-button>
       </template>
     </el-dialog>
   </div>
@@ -93,13 +93,13 @@ import request from '@/utils/request'
 const route = useRoute()
 const projectId = route.params.id
 
-// 项目基本信息
+// Project basic information
 const project = reactive({
   name: '',
   teamCount: 0
 })
 
-// 分页参数
+// Pagination parameters
 const currentPage = ref(1)
 const pageSize = ref(5)
 const totalMembers = ref(0)
@@ -107,17 +107,17 @@ const members = ref([])
 
 const loading = ref(false)
 
-// 添加成员弹窗
+// Add member dialog visibility
 const addMemberDialogVisible = ref(false)
 const newMember = reactive({ name: '', status: '', workingHour: '', role: '' })
 
-// 打开新增成员弹窗
+// Open the add member dialog
 const openAddMemberDialog = () => {
   Object.assign(newMember, { name: '', status: '', workingHour: '', role: '' })
   addMemberDialogVisible.value = true
 }
 
-// 获取项目基本信息
+// Fetch project basic information
 const fetchProjectInfo = async () => {
   try {
     const res = await request.get(`/project/info/${projectId}`)
@@ -125,11 +125,11 @@ const fetchProjectInfo = async () => {
     project.teamCount = res.data.teamCount
   } catch (err) {
     console.error(err)
-    ElMessage.error('网络错误，获取项目基本信息失败')
+    ElMessage.error('Network error, failed to fetch project information')
   }
 }
 
-// 获取团队成员列表
+// Fetch team members list
 const fetchMembers = async () => {
   loading.value = true
   try {
@@ -140,16 +140,16 @@ const fetchMembers = async () => {
     totalMembers.value = res.data.total
   } catch (err) {
     console.error(err)
-    ElMessage.error('网络错误，获取团队成员失败')
+    ElMessage.error('Network error, failed to fetch team members')
   } finally {
     loading.value = false
   }
 }
 
-// 新增成员
+// Add a new member
 const addMember = async () => {
   if (!newMember.name || !newMember.status || !newMember.workingHour || !newMember.role) {
-    ElMessage.warning('请填写完整信息')
+    ElMessage.warning('Please fill in all information')
     return
   }
   try {
@@ -158,41 +158,41 @@ const addMember = async () => {
     project.teamCount++
     totalMembers.value++
     addMemberDialogVisible.value = false
-    ElMessage.success('添加成功')
+    ElMessage.success('Member added successfully')
   } catch (err) {
     console.error(err)
-    ElMessage.error(err.response?.data?.message || '添加失败')
+    ElMessage.error(err.response?.data?.message || 'Failed to add member')
   }
 }
 
-// 删除成员
+// Delete a member
 const deleteMember = async (memberId) => {
   try {
     await request.delete(`/project/info/${projectId}/team/${memberId}`)
     members.value = members.value.filter(m => m.id !== memberId)
     project.teamCount--
     totalMembers.value--
-    ElMessage.success('删除成功')
+    ElMessage.success('Member deleted successfully')
   } catch (err) {
     console.error(err)
-    ElMessage.error(err.response?.data?.message || '删除失败')
+    ElMessage.error(err.response?.data?.message || 'Failed to delete member')
   }
 }
 
-// 页码变化
+// Handle page change
 const handlePageChange = (page) => {
   currentPage.value = page
   fetchMembers()
 }
 
-// 每页数量变化
+// Handle page size change
 const handlePageSizeChange = (size) => {
   pageSize.value = size
   currentPage.value = 1
   fetchMembers()
 }
 
-// 初始化
+// Initialize
 onMounted(async () => {
   await fetchProjectInfo()
   await fetchMembers()

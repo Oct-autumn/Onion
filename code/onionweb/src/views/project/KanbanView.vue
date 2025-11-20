@@ -9,7 +9,7 @@
         <div class="column-header">
           <span class="column-title">{{ column.title }}</span>
           <el-button size="mini" type="primary" @click="openTaskDialog(column.key)">
-            + 新增任务
+            + Add Task
           </el-button>
         </div>
 
@@ -27,46 +27,46 @@
               <div class="task-card-content">
                 <h3 class="task-title">{{ element.title }}</h3>
                 <p class="task-desc">{{ element.description }}</p>
-                <p class="task-assigneer">责任人: {{ element.assigneer }}</p>
-                <p class="task-workingHour">工时: {{ element.workingHour }}</p>
+                <p class="task-assigneer">Assignee: {{ element.assigneer }}</p>
+                <p class="task-workingHour">Work Hours: {{ element.workingHour }}</p>
               </div>
               <el-button
                   type="primary"
                   size="mini"
                   class="edit-task-btn"
                   @click="openTaskDialog(element.status, element)"
-              >编辑</el-button>
+              >Edit</el-button>
               <el-button
                   type="danger"
                   size="mini"
                   class="delete-task-btn"
                   @click="deleteTask(element)"
-              >删除</el-button>
+              >Delete</el-button>
             </el-card>
           </template>
         </draggable>
       </div>
     </div>
 
-    <!-- 任务弹窗 -->
-    <el-dialog title="任务" width="500px" v-model="addTaskDialogVisible">
+    <!-- Task Dialog -->
+    <el-dialog title="Task" width="500px" v-model="addTaskDialogVisible">
       <el-form ref="taskFormRef" :model="newTask" label-width="100px">
-        <el-form-item label="任务名称" prop="title">
-          <el-input v-model="newTask.title" placeholder="请输入任务名称" />
+        <el-form-item label="Task Name" prop="title">
+          <el-input v-model="newTask.title" placeholder="Please enter task name" />
         </el-form-item>
-        <el-form-item label="任务描述" prop="description">
-          <el-input type="textarea" v-model="newTask.description" placeholder="请输入任务描述" :rows="3"/>
+        <el-form-item label="Description" prop="description">
+          <el-input type="textarea" v-model="newTask.description" placeholder="Please enter task description" :rows="3"/>
         </el-form-item>
-        <el-form-item label="责任人" prop="assigneer">
-          <el-input v-model="newTask.assigneer" placeholder="请输入责任人" />
+        <el-form-item label="Assignee" prop="assigneer">
+          <el-input v-model="newTask.assigneer" placeholder="Please enter assignee" />
         </el-form-item>
-        <el-form-item label="工时" prop="workingHour">
-          <el-input v-model="newTask.workingHour" placeholder="请输入完成工时" />
+        <el-form-item label="Work Hours" prop="workingHour">
+          <el-input v-model="newTask.workingHour" placeholder="Please enter work hours" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="addTaskDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveTask">确认</el-button>
+        <el-button @click="addTaskDialogVisible = false">Cancel</el-button>
+        <el-button type="primary" @click="saveTask">Confirm</el-button>
       </template>
     </el-dialog>
   </div>
@@ -78,12 +78,12 @@ import draggable from 'vuedraggable'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
 
-const projectId = 1 // 可以改为动态路由获取
+const projectId = 1 // Can be changed to get from dynamic route
 
 const columns = reactive([
   { key: 'todo', title: 'To-Do', tasks: [] },
   { key: 'inprocess', title: 'In-Process', tasks: [] },
-  { key: 'codereview', title: 'codeReview', tasks: [] },
+  { key: 'codereview', title: 'Code Review', tasks: [] },
   { key: 'done', title: 'Done', tasks: [] }
 ])
 
@@ -91,9 +91,9 @@ const addTaskDialogVisible = ref(false)
 const currentColumnKey = ref(null)
 const newTask = reactive({ title: '', description: '', assigneer: '', workingHour: '' })
 const taskFormRef = ref(null)
-const editingTask = ref(null) // 当前编辑的任务
+const editingTask = ref(null) // Currently editing task
 
-// 打开任务弹窗（新增或编辑）
+// Open task dialog (add or edit)
 const openTaskDialog = (columnKey, taskToEdit = null) => {
   currentColumnKey.value = columnKey
   if (taskToEdit) {
@@ -106,7 +106,7 @@ const openTaskDialog = (columnKey, taskToEdit = null) => {
   addTaskDialogVisible.value = true
 }
 
-// 获取任务列表
+// Fetch task list
 const fetchTasks = async () => {
   try {
     const res = await request.get(`/kanban/tasks`, { params: { projectId } })
@@ -117,29 +117,29 @@ const fetchTasks = async () => {
     })
   } catch (err) {
     console.error(err)
-    ElMessage.error('获取任务失败')
+    ElMessage.error('Failed to fetch tasks')
   }
 }
 
-// 保存任务（新增或编辑）
+// Save task (add or edit)
 const saveTask = async () => {
   if (!newTask.title || !newTask.description || !newTask.assigneer || !newTask.workingHour) {
-    ElMessage.warning('请填写完整任务信息')
+    ElMessage.warning('Please fill in all task information')
     return
   }
 
   try {
     if (editingTask.value) {
-      // 编辑任务
+      // Edit task
       const res = await request.put(`/kanban/tasks/${editingTask.value.id}`, {
         ...newTask,
         status: currentColumnKey.value,
         projectId
       })
       Object.assign(editingTask.value, res.data)
-      ElMessage.success('任务更新成功')
+      ElMessage.success('Task updated successfully')
     } else {
-      // 新增任务
+      // Add new task
       const res = await request.post(`/kanban/tasks`, {
         ...newTask,
         status: currentColumnKey.value,
@@ -147,36 +147,36 @@ const saveTask = async () => {
       })
       const col = columns.find(c => c.key === currentColumnKey.value)
       if (col) col.tasks.push(res.data)
-      ElMessage.success('任务添加成功')
+      ElMessage.success('Task added successfully')
     }
     addTaskDialogVisible.value = false
   } catch (err) {
     console.error(err)
-    ElMessage.error(editingTask.value ? '更新任务失败' : '添加任务失败')
+    ElMessage.error(editingTask.value ? 'Failed to update task' : 'Failed to add task')
   }
 }
 
-// 删除任务
+// Delete task
 const deleteTask = async (task) => {
   try {
-    await ElMessageBox.confirm(`确定删除任务 "${task.title}" 吗？`, '删除确认', {
-      confirmButtonText: '删除',
-      cancelButtonText: '取消',
+    await ElMessageBox.confirm(`Are you sure you want to delete the task "${task.title}"?`, 'Delete Confirmation', {
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel',
       type: 'warning'
     })
     await request.delete(`/kanban/tasks/${task.id}`)
     const col = columns.find(c => c.key === task.status)
     if (col) col.tasks = col.tasks.filter(t => t.id !== task.id)
-    ElMessage.success('任务删除成功')
+    ElMessage.success('Task deleted successfully')
   } catch (err) {
     if (err !== 'cancel') {
       console.error(err)
-      ElMessage.error('删除任务失败')
+      ElMessage.error('Failed to delete task')
     }
   }
 }
 
-// 拖拽结束
+// Drag end event
 const onTaskDragEnd = async (evt) => {
   const movedTask = evt.item.__vue__.element
   const newStatus = evt.to.__vue__.column.key
@@ -184,16 +184,16 @@ const onTaskDragEnd = async (evt) => {
     movedTask.status = newStatus
     try {
       await request.put(`/kanban/tasks/${movedTask.id}`, { status: newStatus })
-      ElMessage.success('任务状态更新成功')
+      ElMessage.success('Task status updated successfully')
     } catch (err) {
       console.error(err)
-      ElMessage.error('更新任务状态失败')
+      ElMessage.error('Failed to update task status')
       fetchTasks()
     }
   }
 }
 
-// 获取任务颜色
+// Get task card color based on status
 const getTaskColor = (status) => {
   switch (status) {
     case 'todo': return '#e6f7ff'
