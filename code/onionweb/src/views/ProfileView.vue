@@ -294,7 +294,7 @@ const roleCodeMap = {
       user_id: currentUser.value.id,
     }
 
-    const response = await fetch('/api/user/update', {
+    const response = await fetch('/user/update', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -365,7 +365,7 @@ const roleCodeMap = {
       user_id: currentUser.value.id,
     }
 
-    const response = await fetch('/api/user/change_pwd', {
+    const response = await fetch('/user/change_pwd', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

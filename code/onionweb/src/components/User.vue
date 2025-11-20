@@ -102,7 +102,7 @@ const fetchUsers = async () => {
   if (!isAdmin.value) return
   loading.value = true
   try {
-    const response = await fetch(`/api/user/list?page=${currentPage.value}&size=${pageSize}`)
+    const response = await fetch(`/user/list?page=${currentPage.value}&size=${pageSize}`)
     let result = null
     try {
       result = await response.json()
@@ -174,7 +174,7 @@ const addUser = async () => {
       password: '123456',
     }
 
-    const response = await fetch('/api/user/register', {
+    const response = await fetch('/user/register', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
