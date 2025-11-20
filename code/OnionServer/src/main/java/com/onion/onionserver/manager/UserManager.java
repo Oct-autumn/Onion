@@ -2,11 +2,11 @@ package com.onion.onionserver.manager;
 
 import com.onion.onionserver.model.dao.User;
 import com.onion.onionserver.repo.UserRepo;
-import lombok.Data;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Date;
+import java.util.List;
 
 @Service
 public class UserManager {
@@ -34,5 +34,18 @@ public class UserManager {
 
     public User getUserById(Long id) {
         return userRepo.findById(id).orElse(null);
+    }
+
+    public void updateUser(User user) {
+        if (userRepo.existsById(user.getId()))    {
+            user.setUpdateAt(LocalDateTime.now());
+            userRepo.save(user);
+        }
+    }
+
+    public List<User> getAllUsers(Integer page, Integer pagenum) {
+        int offset = (page - 1) * pagenum;
+        var pages = userRepo.findAll(Pageable.ofSize(pagenum).withPage(offset / pagenum));
+        return pages.getContent();
     }
 }
