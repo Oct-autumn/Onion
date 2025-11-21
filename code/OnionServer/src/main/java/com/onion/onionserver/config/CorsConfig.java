@@ -17,15 +17,16 @@ public class CorsConfig {
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOrigin("http://localhost:5173");
-        config.addAllowedOrigin("http://8.138.14.149:5173");
-        config.addAllowedOrigin("http://8.138.14.149:8080");
-        config.addAllowedOrigin("http://172.18.36.202:8080");
+        config.addAllowedOrigin("*");
+        //config.addAllowedOrigin("http://localhost:5173");
+        //config.addAllowedOrigin("http://8.138.14.149:5173");
+        //config.addAllowedOrigin("http://8.138.14.149:8080");
+        //config.addAllowedOrigin("http://172.18.36.202:8080");
         
         config.setAllowCredentials(true);
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
-        config.setMaxAge(3600L);
+        config.setMaxAge(7600L);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
