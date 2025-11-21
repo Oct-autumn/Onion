@@ -27,9 +27,6 @@ public class User {
     @Column(name = "role", nullable = false)
     private int role; // 0: normal user, 1: admin
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    private UserAuth userAuth;
-
     @Column(name = "create_at", nullable = false)
     private LocalDateTime createAt;
 
