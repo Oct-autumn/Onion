@@ -18,57 +18,57 @@
               <h2>User Registration</h2>
             </div>
           </template>
-          
+
           <el-form
-            ref="registerFormRef"
-            :model="registerForm"
-            :rules="rules"
-            label-width="80px"
-            class="register-form"
+              ref="registerFormRef"
+              :model="registerForm"
+              :rules="rules"
+              label-width="80px"
+              class="register-form"
           >
             <el-form-item label="Email" prop="email">
               <el-input
-                v-model="registerForm.email"
-                placeholder="Enter your email"
-                type="email"
-                clearable
+                  v-model="registerForm.email"
+                  placeholder="Enter your email"
+                  type="email"
+                  clearable
               />
             </el-form-item>
-            
+
             <el-form-item label="Username" prop="username">
               <el-input
-                v-model="registerForm.username"
-                placeholder="Enter your username"
-                clearable
+                  v-model="registerForm.username"
+                  placeholder="Enter your username"
+                  clearable
               />
             </el-form-item>
-            
+
             <el-form-item label="Password" prop="password">
               <el-input
-                v-model="registerForm.password"
-                placeholder="Enter your password"
-                type="password"
-                show-password
-                clearable
+                  v-model="registerForm.password"
+                  placeholder="Enter your password"
+                  type="password"
+                  show-password
+                  clearable
               />
             </el-form-item>
-            
+
             <el-form-item label="Confirm Password" prop="confirmPassword">
               <el-input
-                v-model="registerForm.confirmPassword"
-                placeholder="Confirm your password"
-                type="password"
-                show-password
-                clearable
+                  v-model="registerForm.confirmPassword"
+                  placeholder="Confirm your password"
+                  type="password"
+                  show-password
+                  clearable
               />
             </el-form-item>
-            
+
             <el-form-item>
               <el-button
-                type="primary"
-                @click="submitForm"
-                :loading="loading"
-                class="register-button"
+                  type="primary"
+                  @click="submitForm"
+                  :loading="loading"
+                  class="register-button"
               >
                 Register
               </el-button>
@@ -77,7 +77,7 @@
               </el-button>
             </el-form-item>
           </el-form>
-          
+
           <div class="login-link">
             <p>Already have an account? <router-link to="/login">Sign in</router-link></p>
           </div>
@@ -91,6 +91,8 @@
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
+// 关键修改：引入你封装的 axios 实例
+import request from '@/utils/request.js'; // 注意路径是否正确
 
 const router = useRouter()
 const registerFormRef = ref()
@@ -133,33 +135,29 @@ const rules = {
 
 const submitForm = async () => {
   if (!registerFormRef.value) return
-  
+
   await registerFormRef.value.validate(async (valid) => {
     if (valid) {
       loading.value = true
       try {
-        const response = await fetch('http://localhost:8080/user/register', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: registerForm.email,
-            username: registerForm.username,
-            password: registerForm.password
-          })
-        })
-        
-        if (response.ok) {
-          ElMessage.success('Registration successful!')
-          router.push('/login')
-        } else {
-          const error = await response.json()
-          ElMessage.error(error.message || 'Registration failed')
-        }
+        // 关键修改：使用封装的 request 实例
+        // 由于在 request.js 中已经配置了 baseURL，这里可以直接使用相对路径
+        const response = await request.post('/user/register', {
+          email: registerForm.email,
+          username: registerForm.username,
+          password: registerForm.password
+        });
+
+        // 因为在响应拦截器中我们直接返回了 response.data，
+        // 所以这里的 response 就是后端返回的数据体
+        ElMessage.success('Registration successful!')
+        router.push('/login')
+
       } catch (error) {
-        ElMessage.error('Network error, please try again later')
-        console.error('Registration error:', error)
+        // 错误处理会进入这里，包括网络错误、401、500等
+        // 在 request.js 的响应拦截器中，我们已经对错误进行了处理（如弹框提示）
+        // 这里可以根据需要进行额外的处理
+        console.error('Registration error:', error);
       } finally {
         loading.value = false
       }
@@ -174,9 +172,10 @@ const resetForm = () => {
 </script>
 
 <style scoped>
+/* ... 你的样式代码保持不变 ... */
 .register-container {
   min-height: 100vh;
-  width: 100vw; 
+  width: 100vw;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
@@ -195,7 +194,7 @@ const resetForm = () => {
 
 .image-section {
   flex: 1;
-  min-width: 0; 
+  min-width: 0;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
@@ -241,7 +240,7 @@ const resetForm = () => {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  min-width: 0; 
+  min-width: 0;
 }
 
 .register-card {
