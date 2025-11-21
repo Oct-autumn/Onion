@@ -73,6 +73,7 @@
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
+import request from "@/utils/request.js";
 
 const router = useRouter()
 const loginFormRef = ref()
@@ -94,40 +95,37 @@ const rules = {
   ]
 }
 
-const submitForm = async () => {
-  if (!loginFormRef.value) return
-  
-  await loginFormRef.value.validate(async (valid) => {
-    if (valid) {
-      loading.value = true
-      try {
-        const response = await fetch('http://localhost:8080/user/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: loginForm.email,
-            password: loginForm.password
-          })
-        })
-        
-        if (response.ok) {
-          ElMessage.success('Login successful!')
-          router.push('/project')
-        } else {
-          const error = await response.json()
-          ElMessage.error(error.message || 'Login failed')
-        }
-      } catch (error) {
-        ElMessage.error('Network error, please try again later')
-        console.error('Login error:', error)
-      } finally {
-        loading.value = false
-      }
+const submitForm = async () => { // 确保外层函数是 async
+  if (!loginFormRef.value) return;
+
+  // 注意：validate 的回调函数不能是 async！需将 await 移到 validate 外部
+  const isValid = await loginFormRef.value.validate(); // 先执行校验，获取结果
+
+  if (isValid) { // 校验通过再执行请求
+    loading.value = true;
+    try {
+      // 直接使用封装的 request 发起请求（无需嵌套 try）
+      const response = await request.post('/user/login', {
+        email: loginForm.email,
+        password: loginForm.password
+      });
+
+      // 登录成功：存储 Token 和用户信息
+      const { authToken, userId, username, role } = response;
+      localStorage.setItem('token', authToken); // 与 axios 封装中读取的 key 一致
+      localStorage.setItem('userInfo', JSON.stringify({ userId, username, role }));
+
+      ElMessage.success('Login successful!');
+      router.push('/project');
+    } catch (error) {
+      // 捕获请求错误（包括网络错误、后端返回的错误）
+      ElMessage.error(error.message || 'Login failed');
+      console.error('Login error:', error);
+    } finally {
+      loading.value = false; // 无论成功失败，都关闭加载
     }
-  })
-}
+  }
+};
 
 const resetForm = () => {
   if (!loginFormRef.value) return
