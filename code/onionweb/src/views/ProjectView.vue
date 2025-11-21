@@ -203,7 +203,7 @@ const submitNewProject = async () => {
 
     // 2. 使用封装的 axios 实例发送 POST 请求
     // 注意：请确保后端创建项目的 API 地址是 '/api/project'，如果不是请修改
-    await request.post('/api/project', projectData);
+    await request.post('/project', projectData);
 
     // 3. 请求成功后的处理
     ElMessage.success('Project created successfully.')
