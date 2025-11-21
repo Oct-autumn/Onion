@@ -43,7 +43,7 @@ public class ProjectMemberController {
     public ResponseEntity<ProjectMemberResponseDTO> add(@RequestHeader("Authorization") String authorization,
                                                         @PathVariable Long projectId,
                                                         @RequestBody ProjectMemberAddDTO dto) {
-        Long operatorId = extractUserId(authorization);
+        Integer operatorId = extractUserId(authorization);
         // TODO: 可以在这里加权限校验，比如 operatorId 是否是项目 owner
 
         ProjectMember saved = manager.addMember(projectId, dto);
@@ -61,14 +61,14 @@ public class ProjectMemberController {
     public ResponseEntity<Void> delete(@RequestHeader("Authorization") String authorization,
                                        @PathVariable Long projectId,
                                        @PathVariable Long memberId) {
-        Long operatorId = extractUserId(authorization);
+        Integer operatorId = extractUserId(authorization);
         // TODO: 权限校验
         manager.removeMember(memberId);
         return ResponseEntity.ok().build();
     }
 
     // ---- helpers ----
-    private Long extractUserId(String authorization) {
+    private Integer extractUserId(String authorization) {
         if (authorization == null || !authorization.startsWith("Bearer ")) {
             throw new RuntimeException("Authorization header missing or invalid");
         }

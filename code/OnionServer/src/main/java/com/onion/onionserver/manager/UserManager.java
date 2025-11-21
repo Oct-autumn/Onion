@@ -32,7 +32,7 @@ public class UserManager {
         return userRepo.save(user);
     }
 
-    public User getUserById(Long id) {
+    public User getUserById(Integer id) {
         return userRepo.findById(id).orElse(null);
     }
 

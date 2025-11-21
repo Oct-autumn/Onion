@@ -44,7 +44,7 @@ public class JwtFilter extends OncePerRequestFilter {
             Claims claims = jwtTools.verifyToken(token);
             if (claims != null) {
                 // Token is valid, set user in UserManager
-                Long userId = JwtTools.getUserIdFromClaims(claims);
+                Integer userId = JwtTools.getUserIdFromClaims(claims);
                 User user = userManager.getUserById(userId);
                 if (user != null) {
                     SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(

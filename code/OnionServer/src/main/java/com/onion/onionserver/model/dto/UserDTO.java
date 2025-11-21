@@ -21,7 +21,7 @@ public class UserDTO {
     @AllArgsConstructor
     public static class LoginResponse {
         private String authToken;
-        private Long userId;
+        private Integer userId;
         private String username;
         private int role; // 0: normal user, 1: admin
     }
@@ -36,7 +36,7 @@ public class UserDTO {
     @Data
     @AllArgsConstructor
     public static class RegisterResponse {
-        private Long id;
+        private Integer id;
         private int role; // 0: normal user, 1: admin
     }
 
@@ -45,14 +45,14 @@ public class UserDTO {
         private String username;
         private String email;
         private int role;
-        private Long user_id;
+        private Integer user_id;
     }
 
     @Data
     public static class ChangePasswordRequest {
         private String oldPassword;
         private String newPassword;
-        private Long user_id;
+        private Integer user_id;
     }
 
     @Data
@@ -60,7 +60,7 @@ public class UserDTO {
         private List<UserInfo> users;
 
         public static class UserInfo {
-            private Long id;
+            private Integer id;
             private String username;
             private String email;
             private int role;

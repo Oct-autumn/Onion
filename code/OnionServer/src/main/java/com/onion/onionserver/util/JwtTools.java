@@ -45,8 +45,8 @@ public class JwtTools {
         }
     }
 
-    public static Long getUserIdFromClaims(Claims claims) {
-        return Long.parseLong(claims.getSubject());
+    public static Integer getUserIdFromClaims(Claims claims) {
+        return Integer.parseInt(claims.getSubject());
     }
 
     public static Long timeToExpiry(Claims claims) {

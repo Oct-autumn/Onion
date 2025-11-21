@@ -26,7 +26,7 @@ public class ProjectController {
     @PostMapping("/create")
     public ResponseEntity<ProjectResponseDTO> create(@RequestHeader("Authorization") String authorization,
                                                      @RequestBody ProjectCreateDTO dto) {
-        Long ownerId = extractUserId(authorization);
+        Integer ownerId = extractUserId(authorization);
         Project saved = projectManager.createProject(dto, ownerId);
 
         ProjectResponseDTO resp = new ProjectResponseDTO();
@@ -66,7 +66,7 @@ public class ProjectController {
 
     // ---- helpers ----
 
-    private Long extractUserId(String authorization) {
+    private Integer extractUserId(String authorization) {
         if (authorization == null || !authorization.startsWith("Bearer ")) {
             throw new RuntimeException("Authorization header missing or invalid");
         }

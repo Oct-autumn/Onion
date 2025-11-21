@@ -12,6 +12,15 @@ CREATE TABLE user (
                       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- user_auth 表
+
+CREATE TABLE user_auth (
+                            id INTEGER PRIMARY KEY,
+                            hash VARCHAR(256) NOT NULL,
+                            salt VARCHAR(32) NOT NULL,
+                            FOREIGN KEY (id) REFERENCES user(id)
+);
+
 -- project 表（注意时间字段统一成 created_at / updated_at）
 CREATE TABLE project (
                          id INTEGER PRIMARY KEY AUTOINCREMENT,
