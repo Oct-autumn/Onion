@@ -9,6 +9,8 @@ import com.onion.onionserver.util.RandTools;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
+import static java.util.Objects.requireNonNull;
+
 @Service
 public class AuthenticationManager {
     private final UserRepo userRepo;
@@ -43,7 +45,7 @@ public class AuthenticationManager {
             return null;
         }
 
-        UserAuth userAuth = user.getUserAuth();
+        UserAuth userAuth = requireNonNull(userAuthRepo.findById(user.getId()).orElse(null), "UserAuth not found for user. This should not happen.");
         String hashString = HashTools.stringToSHA256(password);
         hashString += userAuth.getSalt();
         hashString = HashTools.stringToSHA256(hashString);
