@@ -61,9 +61,15 @@ router.beforeEach((to, from, next) => {
       try {
         const userStr = localStorage.getItem('user')
         const user = userStr ? JSON.parse(userStr) : null
-        const isAdmin = user && (user.role === '超级管理员' || user.role === 'admin' || user.role === '管理员')
+        const isAdmin =
+          user &&
+          (
+            user.role === 'Admin' ||
+            user.role === 'admin' ||
+            user.role === '管理员' ||
+            user.role === '超级管理员'
+          )
         if (!isAdmin) {
-          // 非管理员访问受限页面时，跳转到项目页
           return next('/project')
         }
       } catch (_) {

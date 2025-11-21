@@ -73,7 +73,7 @@
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
-import request from "@/utils/request.js";
+import request from '@/utils/request.js'
 
 const router = useRouter()
 const loginFormRef = ref()
@@ -113,7 +113,7 @@ const submitForm = async () => { // 确保外层函数是 async
       // 登录成功：存储 Token 和用户信息
       const { authToken, userId, username, role } = response;
       localStorage.setItem('token', authToken); // 与 axios 封装中读取的 key 一致
-      localStorage.setItem('userInfo', JSON.stringify({ userId, username, role }));
+      localStorage.setItem('userInfo', JSON.stringify({ userId, username, email: loginForm.email, role }));
 
       ElMessage.success('Login successful!');
       router.push('/project');
@@ -129,8 +129,8 @@ const submitForm = async () => { // 确保外层函数是 async
 
 const resetForm = () => {
   if (!loginFormRef.value) return
-loginFormRef.value.resetFields()
-}
+  loginFormRef.value.resetFields()
+};
 </script>
 
 <style scoped>
