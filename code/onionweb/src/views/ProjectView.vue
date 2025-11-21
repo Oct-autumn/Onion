@@ -50,7 +50,7 @@
           @current-change="handlePageChange"
       />
     </div>
-	
+
     <!-- Add Project Dialog -->
     <el-dialog
         v-model="showAddProjectDialog"
@@ -88,13 +88,15 @@
       </template>
     </el-dialog>
   </el-card>
-  
+
 </template>
 
 <script setup>
 import { useRouter } from 'vue-router'
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+// 导入封装的 axios 实例
+import request from "@/utils/request.js";
 
 const projectFormRef = ref()
 const router = useRouter()
@@ -131,42 +133,22 @@ const formRules = {
   ]
 }
 
-// Local dummy test projects data
-const dummyProjects = {
-  data: [
-    {
-      id: 1,
-      name: 'AI 图像识别系统',
-      status: '进行中',
-      owner: '张三',
-      createDate: '2025-10-10',
-      planDate: '2025-12-30'
-    },
-    {
-      id: 2,
-      name: '前端管理系统',
-      status: '未开始',
-      owner: '李四',
-      createDate: '2025-09-15',
-      planDate: '2025-12-20'
-    }
-  ]
-}
-
+// fetchProjects 函数看起来已经正确使用了封装的 request，这里保持不变
 const fetchProjects = async () => {
   loading.value = true
   try {
-
+    // 注意：这里假设你的后端 API 返回的数据结构是 { data: { projects: [...], total: 10 } }
+    // 如果实际结构不同，请根据后端返回进行调整
     const res = await request.get('/project/list', {
-      params: { 
-        page: currentPage.value, 
-        pageSize: numProjectsPerPage.value 
+      params: {
+        page: currentPage.value,
+        pageSize: numProjectsPerPage.value
       }
     })
-	
+
     projects.value = res.data.projects
     totalProjects.value = res.data.total
-    
+
   } catch (err) {
     console.error(err)
     ElMessage.error('网络错误，获取项目列表失败')
@@ -194,7 +176,10 @@ const goToProject = (id) => {
 // Handle dialog close
 const handleDialogClose = () => {
   showAddProjectDialog.value = false
-  // Reset form
+  // 关闭弹窗时重置表单和校验状态
+  if (projectFormRef.value) {
+    projectFormRef.value.resetFields();
+  }
   newProjectForm.value = {
     name: '',
     status: '',
@@ -202,50 +187,43 @@ const handleDialogClose = () => {
   }
 }
 
-// Submit new project
+// 1. 修改 submitNewProject 函数
 const submitNewProject = async () => {
-  // Validate form first
-  projectFormRef.value.validate(async (valid) => {
-    if (valid) {
-      try {
-        const projectData = {
-          name: newProjectForm.name,
-          status: newProjectForm.status,
-          planDate: newProjectForm.planDate
-        }
+  if (!projectFormRef.value) return;
 
-        // Make API call to create new project
-        const response = await fetch('/api/project', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(projectData)
-        })
+  try {
+    // 使用 async/await 方式进行表单校验
+    await projectFormRef.value.validate();
 
-        if (response.ok) {
-          ElMessage.success('Project created successfully.')
-          
-          // Close dialog and reset form
-          handleDialogClose()
-          
-          // Refresh the project list
-          fetchProjects()
-        } else {
-          const errorData = await response.json()
-          console.error('Error creating project:', errorData)
-          ElMessage.error('Failed to create project')
-        }
-      } catch (error) {
-        console.error('Network error creating project:', error)
-        ElMessage.error('Failed to create project')
-      }
-    } else {
-      ElMessage.error('Please fill in all required fields')
-      return false
+    const projectData = {
+      name: newProjectForm.value.name,
+      status: newProjectForm.value.status,
+      planDate: newProjectForm.value.planDate
     }
-  })
+
+    // 2. 使用封装的 axios 实例发送 POST 请求
+    // 注意：请确保后端创建项目的 API 地址是 '/api/project'，如果不是请修改
+    await request.post('/api/project', projectData);
+
+    // 3. 请求成功后的处理
+    ElMessage.success('Project created successfully.')
+
+    // 关闭对话框并重置表单
+    handleDialogClose()
+
+    // 刷新项目列表
+    fetchProjects()
+
+  } catch (error) {
+    // 4. 统一处理错误
+    // 如果是表单校验失败，error 会包含详细信息
+    // 如果是 API 请求失败，错误会被 axios 拦截器捕获并 reject
+    console.error('Error creating project:', error)
+    // 表单校验失败的错误信息已经包含在 error 中，我们可以直接显示
+    ElMessage.error(error.message || 'Failed to create project')
+  }
 }
+
 
 // Fetch projects when component mounts
 onMounted(() => {

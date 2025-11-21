@@ -15,17 +15,17 @@
           </div>
         </template>
       </el-table-column>
-      
+
       <el-table-column prop="email" label="Email" />
     </el-table>
 
     <div class="pagination-container">
       <el-pagination
-        v-model:current-page="currentPage"
-        :page-size="pageSize"
-        :total="total"
-        layout="total, prev, pager, next"
-        @current-change="handleCurrentChange"
+          v-model:current-page="currentPage"
+          :page-size="pageSize"
+          :total="total"
+          layout="total, prev, pager, next"
+          @current-change="handleCurrentChange"
       />
     </div>
 
@@ -38,10 +38,10 @@
           <el-input v-model="newUser.email" placeholder="Enter email" />
         </el-form-item>
         <el-alert
-          type="info"
-          :closable="false"
-          show-icon
-          title="New users receive the default password 123456"
+            type="info"
+            :closable="false"
+            show-icon
+            title="New users receive the default password 123456"
         />
       </el-form>
       <template #footer>
@@ -57,6 +57,8 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+// 1. 确保已导入封装的 axios 实例
+import request from "@/utils/request.js";
 
 const currentPage = ref(1)
 const pageSize = 20
@@ -65,7 +67,9 @@ const loading = ref(false)
 
 const currentUser = ref(null)
 try {
-  const userStr = localStorage.getItem('user')
+  // 注意：这里的 'user' key 要和你登录时存储的一致，之前我们用的是 'userInfo'
+  // 如果登录时是 localStorage.setItem('userInfo', ...)，这里也要对应修改
+  const userStr = localStorage.getItem('userInfo')
   currentUser.value = userStr ? JSON.parse(userStr) : null
 } catch (_) {
   currentUser.value = null
@@ -98,25 +102,29 @@ const mapUser = (item) => {
   }
 }
 
+// 2. 修改 fetchUsers 函数
 const fetchUsers = async () => {
   if (!isAdmin.value) return
   loading.value = true
   try {
-    const response = await fetch(`/user/list?page=${currentPage.value}&size=${pageSize}`)
-    let result = null
-    try {
-      result = await response.json()
-    } catch (_) {
-      result = null
-    }
-    if (!response.ok) {
-      throw new Error(result?.message || 'Failed to load users')
-    }
+    // 使用 request.get 替代 fetch
+    // 注意：get 请求的参数可以直接放在第二个参数的 params 对象里
+    const result = await request.get('/user/list', {
+      params: {
+        page: currentPage.value,
+        size: pageSize.value
+      }
+    });
+
+    // 由于我们在 axios 响应拦截器中已经 return response.data，
+    // 所以这里的 result 直接就是后端返回的数据体
     const list = Array.isArray(result?.data) ? result.data : Array.isArray(result) ? result : []
     users.value = list.map(mapUser)
     total.value = result?.total ?? list.length ?? 0
   } catch (error) {
+    // 错误处理被大大简化，因为 axios 拦截器已经处理了网络错误和 4xx/5xx 状态码
     console.error('Fetch users error:', error)
+    // error 对象是我们在响应拦截器中 reject 的内容，它包含了 message
     ElMessage.error(error.message || 'Failed to load users')
     users.value = []
     total.value = 0
@@ -154,6 +162,7 @@ const showAddUserDialog = () => {
   addUserDialogVisible.value = true
 }
 
+// 3. 修改 addUser 函数
 const addUser = async () => {
   if (!isAdmin.value) {
     ElMessage.error('Only administrators can perform this action')
@@ -167,44 +176,32 @@ const addUser = async () => {
       ElMessage.error('Email already exists')
       return
     }
-    
+
     const payload = {
       email: newUser.value.email.trim(),
       username: newUser.value.username.trim(),
       password: '123456',
     }
 
-    const response = await fetch('/user/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    })
+    // 使用 request.post 替代 fetch
+    // post 的第二个参数直接是请求体 payload
+    await request.post('/user/register', payload);
 
-    let result = null
-    try {
-      result = await response.json()
-    } catch (_) {
-      result = null
-    }
-
-    if (!response.ok) {
-      throw new Error(result?.message || 'Failed to create user')
-    }
-
+    // 如果请求成功，axios 会返回响应数据，我们这里不需要处理，直接执行后续操作
     currentPage.value = 1
     await fetchUsers()
     addUserDialogVisible.value = false
     ElMessage.success('User created (default password: 123456)')
-  } catch (e) {
-    console.error('Add user failed:', e)
-    ElMessage.error(e.message || 'Failed to create user')
+  } catch (error) {
+    // 同样，这里的错误处理也被简化了
+    console.error('Add user failed:', error)
+    ElMessage.error(error.message || 'Failed to create user')
   }
 }
 </script>
 
 <style scoped>
+/* ... (样式部分保持不变) ... */
 .user-view {
   padding: 20px;
 }
