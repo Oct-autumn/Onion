@@ -101,7 +101,7 @@ const submitForm = async () => {
     if (valid) {
       loading.value = true
       try {
-        const response = await fetch('/user/login', {
+        const response = await fetch('http://localhost:8080/user/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

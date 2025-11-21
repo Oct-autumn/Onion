@@ -17,6 +17,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/user")
+@CrossOrigin
 public class UserController {
     // User-related endpoints would go here
 
