@@ -13,6 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/project/{projectId}/team")
+@CrossOrigin
 public class ProjectMemberController {
 
     private final ProjectMemberManager manager;
