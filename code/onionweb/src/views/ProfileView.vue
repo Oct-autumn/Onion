@@ -248,7 +248,12 @@ onMounted(() => {
   const userStr = localStorage.getItem('userInfo')
   if (userStr) {
     const parsed = JSON.parse(userStr)
-    currentUser.value = { ...parsed }
+    currentUser.value = {
+      id: parsed.userId,
+      name: parsed.username,
+      email: parsed.email,
+      role: parsed.role
+    }
     Object.assign(profileForm, {
       name: currentUser.value.name || '',
       email: currentUser.value.email || '',
@@ -278,7 +283,8 @@ const saveProfile = async () => {
       return
     }
 
-    if (!currentUser.value?.id) {
+    const userId = currentUser.value?.id || currentUser.value?.userId
+    if (!userId) {
       ElMessage.error('Cannot determine current user information')
       loading.value = false
       return
@@ -295,7 +301,7 @@ const saveProfile = async () => {
       username: profileForm.name.trim(),
       email: profileForm.email.trim(),
       role: mappedRole,
-      user_id: currentUser.value.id,
+      user_id: userId,
     }
 
     // 使用封装的 axios 实例发送 POST 请求
@@ -303,8 +309,8 @@ const saveProfile = async () => {
 
     // 请求成功后更新本地存储和当前用户信息
     const updatedUser = {
-      ...currentUser.value,
-      name: profileForm.name.trim(),
+      userId: userId,
+      username: profileForm.name.trim(),
       email: profileForm.email.trim(),
       role: profileForm.role,
     }
@@ -347,7 +353,8 @@ const changePassword = async () => {
   try {
     await passwordFormRef.value.validate()
 
-    if (!currentUser.value?.id) {
+    const userId = currentUser.value?.id || currentUser.value?.userId
+    if (!userId) {
       ElMessage.error('Cannot determine current user information')
       return
     }
@@ -355,7 +362,7 @@ const changePassword = async () => {
     const payload = {
       password: passwordForm.newPassword,
       old_password: passwordForm.currentPassword,
-      user_id: currentUser.value.id,
+      user_id: userId,
     }
 
     // 使用封装的 axios 实例发送 POST 请求
