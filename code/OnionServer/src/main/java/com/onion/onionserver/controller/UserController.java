@@ -40,7 +40,7 @@ public class UserController {
     @PostMapping("/register")
     @ResponseBody
     public ResponseEntity<?> register(@AuthenticationPrincipal User authUser, @RequestBody UserDTO.RegisterRequest request) {
-        if (authUser.getRole() == 1) {
+        if (authUser != null && authUser.getRole() == 1) {
             // admin注册用户时，无需指定密码，默认密码为"password123"
             if (request.getPassword() == null) {
                 request.setPassword("password123");

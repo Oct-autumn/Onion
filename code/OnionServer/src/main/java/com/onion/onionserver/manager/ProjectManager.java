@@ -16,7 +16,7 @@ public class ProjectManager {
         this.projectRepo = projectRepo;
     }
 
-    public Project createProject(ProjectCreateDTO dto, Long ownerId) {
+    public Project createProject(ProjectCreateDTO dto, Integer ownerId) {
         Project project = new Project();
         project.setName(dto.getName());
         project.setDescription(dto.getDescription());

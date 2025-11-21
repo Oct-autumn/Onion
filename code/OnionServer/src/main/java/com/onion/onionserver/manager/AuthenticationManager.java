@@ -19,9 +19,9 @@ public class AuthenticationManager {
         this.userAuthRepo = userAuthRepo;
     }
 
-    public void createAuth(Long user_id, String password) {
+    public void createAuth(Integer user_id, String password) {
         var user = userRepo.findById(user_id).orElse(null);
-        if (user != null) {
+        if (user == null) {
             throw new RuntimeException("User not exist. This should not happen.");
         }
 
@@ -31,7 +31,7 @@ public class AuthenticationManager {
         hashString = HashTools.stringToSHA256(hashString);
 
         UserAuth userAuth = new UserAuth();
-        userAuth.setId(user_id);
+        userAuth.setUser(user);
         userAuth.setSalt(salt);
         userAuth.setHash(hashString);
         userAuthRepo.save(userAuth);
@@ -55,7 +55,7 @@ public class AuthenticationManager {
         }
     }
 
-    public boolean verifyPassword(Long user_id, String password) {
+    public boolean verifyPassword(Integer user_id, String password) {
         UserAuth userAuth = userAuthRepo.findById(user_id).orElse(null);
 
         if (userAuth == null) {
@@ -69,7 +69,7 @@ public class AuthenticationManager {
         return hashString.equals(userAuth.getHash());
     }
 
-    public void updatePassword(Long user_id, String newPassword) {
+    public void updatePassword(Integer user_id, String newPassword) {
         UserAuth userAuth = userAuthRepo.findById(user_id).orElse(null);
 
         if (userAuth == null) {

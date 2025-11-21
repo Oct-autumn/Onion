@@ -12,7 +12,7 @@ import lombok.ToString;
 @Table(name="user_auth")
 public class UserAuth {
     @Id
-    private Long id;
+    private Integer id;
 
     @Column(name = "hash", nullable = false, length = 256)
     private String hash;

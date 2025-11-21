@@ -22,7 +22,7 @@ public class Project {
     private String expectedCompletion; // SQLite TEXT
 
     @Column(name = "owner_id", nullable = false)
-    private Long ownerId;
+    private Integer ownerId;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
