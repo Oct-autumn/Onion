@@ -35,4 +35,8 @@ public class ProjectManager {
         return projectRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
     }
+    
+    public List<Project> projectListByOwnerId(Integer ownerId){
+        return projectRepo.findByOwnerId(ownerId);
+    }
 }

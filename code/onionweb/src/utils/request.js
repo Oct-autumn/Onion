@@ -6,6 +6,7 @@ import router from "@/router/index.js";
 // 创建 axios 实例
 const service = axios.create({
     baseURL: 'http://8.138.14.149:8080',
+    // baseURL: 'http://localhost:8080',
     timeout: 5000
 })
 

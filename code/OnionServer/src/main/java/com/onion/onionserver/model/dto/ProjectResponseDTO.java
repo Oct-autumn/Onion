@@ -8,5 +8,7 @@ public class ProjectResponseDTO {
     private String name;
     private String description;
     private String expectedCompletion;
+    private String createTime;
     private Integer ownerId;
+    private String UserName;
 }

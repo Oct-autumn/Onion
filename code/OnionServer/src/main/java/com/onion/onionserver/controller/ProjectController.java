@@ -2,13 +2,16 @@ package com.onion.onionserver.controller;
 
 import com.onion.onionserver.manager.ProjectManager;
 import com.onion.onionserver.model.dao.Project;
+import com.onion.onionserver.model.dao.User;
 import com.onion.onionserver.model.dto.ProjectCreateDTO;
 import com.onion.onionserver.model.dto.ProjectResponseDTO;
 import com.onion.onionserver.util.JwtTools;
 import io.jsonwebtoken.Claims;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestController
@@ -25,9 +28,9 @@ public class ProjectController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<ProjectResponseDTO> create(@RequestHeader("Authorization") String authorization,
+    public ResponseEntity<ProjectResponseDTO> create(@AuthenticationPrincipal User authUser,
                                                      @RequestBody ProjectCreateDTO dto) {
-        Integer ownerId = extractUserId(authorization);
+        Integer ownerId = authUser.getId();
         Project saved = projectManager.createProject(dto, ownerId);
 
         ProjectResponseDTO resp = new ProjectResponseDTO();
@@ -39,15 +42,18 @@ public class ProjectController {
         return ResponseEntity.ok(resp);
     }
 
-    @PostMapping("/list")
-    public ResponseEntity<List<ProjectResponseDTO>> list() {
-        List<ProjectResponseDTO> resp = projectManager.listProjects().stream().map(p -> {
+    @GetMapping("/list")
+    public ResponseEntity<List<ProjectResponseDTO>> list(@AuthenticationPrincipal User authUser) {
+        Integer userId = authUser.getId();
+        List<ProjectResponseDTO> resp = projectManager.projectListByOwnerId(userId).stream().map(p -> {
             ProjectResponseDTO dto = new ProjectResponseDTO();
             dto.setProjectId(p.getId());
             dto.setName(p.getName());
             dto.setDescription(p.getDescription());
             dto.setExpectedCompletion(p.getExpectedCompletion());
             dto.setOwnerId(p.getOwnerId());
+            dto.setUserName(authUser.getUsername());
+            dto.setCreateTime(p.getCreatedAt().format(DateTimeFormatter.ISO_DATE));
             return dto;
         }).toList();
         return ResponseEntity.ok(resp);
