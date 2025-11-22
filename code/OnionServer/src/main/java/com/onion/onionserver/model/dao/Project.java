@@ -1,5 +1,6 @@
 package com.onion.onionserver.model.dao;
 
+import com.onion.onionserver.model.enums.ProjectStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
@@ -24,9 +25,13 @@ public class Project {
     @Column(name = "owner_id", nullable = false)
     private Integer ownerId;
 
-    @Column(name = "created_at")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 32)
+    private ProjectStatus status;
+
+    @Column(name = "create_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @Column(name = "update_at")
     private LocalDateTime updatedAt;
 }

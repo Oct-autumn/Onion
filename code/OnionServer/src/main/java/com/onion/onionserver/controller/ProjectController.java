@@ -39,6 +39,7 @@ public class ProjectController {
         resp.setDescription(saved.getDescription());
         resp.setExpectedCompletion(saved.getExpectedCompletion());
         resp.setOwnerId(saved.getOwnerId());
+        resp.setStatus(saved.getStatus());
         return ResponseEntity.ok(resp);
     }
 
@@ -54,6 +55,7 @@ public class ProjectController {
             dto.setOwnerId(p.getOwnerId());
             dto.setUserName(authUser.getUsername());
             dto.setCreateTime(p.getCreatedAt().format(DateTimeFormatter.ISO_DATE));
+            dto.setStatus(p.getStatus());
             return dto;
         }).toList();
         return ResponseEntity.ok(resp);
@@ -68,6 +70,7 @@ public class ProjectController {
         dto.setDescription(p.getDescription());
         dto.setExpectedCompletion(p.getExpectedCompletion());
         dto.setOwnerId(p.getOwnerId());
+        dto.setStatus(p.getStatus());
         return ResponseEntity.ok(dto);
     }
 

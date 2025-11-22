@@ -28,6 +28,7 @@ CREATE TABLE project (
                          description TEXT,
                          expected_completion TEXT,
                          owner_id INTEGER NOT NULL,
+                         status TEXT NOT NULL DEFAULT 'NOT_STARTED',
                          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
                          updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
                          FOREIGN KEY (owner_id) REFERENCES user(id)
@@ -47,11 +48,19 @@ CREATE TABLE project_member (
 
 -- requirement 表
 CREATE TABLE requirement (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    description TEXT NOT NULL,
-    assigner_id INTEGER FOREIGN KEY REFERENCES user(id),
-    working_hour REAL NOT NULL,
-    status TEXT NOT NULL,
-    project_id INTEGER FOREIGN KEY REFERENCES project(id)
+                             id INTEGER PRIMARY KEY AUTOINCREMENT,
+                             title TEXT NOT NULL,
+                             description TEXT NOT NULL,
+                             assigner_id INTEGER NOT NULL,
+                             working_hour REAL NOT NULL,
+                             status TEXT NOT NULL,
+                             project_id INTEGER NOT NULL,
+                             FOREIGN KEY (assigner_id) REFERENCES user(id),
+                             FOREIGN KEY (project_id) REFERENCES project(id)
 );
+
+DROP TABLE IF EXISTS user;
+DROP TABLE IF EXISTS project;
+DROP TABLE IF EXISTS project_member;
+DROP TABLE IF EXISTS requirement;
+DROP TABLE IF EXISTS user_auth;

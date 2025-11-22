@@ -2,6 +2,7 @@ package com.onion.onionserver.manager;
 
 import com.onion.onionserver.model.dao.Project;
 import com.onion.onionserver.model.dto.ProjectCreateDTO;
+import com.onion.onionserver.model.enums.ProjectStatus;
 import com.onion.onionserver.repo.ProjectRepo;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +23,7 @@ public class ProjectManager {
         project.setDescription(dto.getDescription());
         project.setExpectedCompletion(dto.getExpectedCompletion());
         project.setOwnerId(ownerId);
+        project.setStatus(dto.getStatus() != null ? dto.getStatus() : ProjectStatus.NOT_STARTED); // Default to NOT_STARTED
         project.setCreatedAt(LocalDateTime.now());
         project.setUpdatedAt(LocalDateTime.now());
         return projectRepo.save(project);
