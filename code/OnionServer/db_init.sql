@@ -40,6 +40,7 @@ CREATE TABLE project_member (
                                 project_id INTEGER NOT NULL,
                                 user_id INTEGER NOT NULL,
                                 role TEXT NOT NULL,       -- 开发者/测试员/项目经理
+                                name TEXT NOT NULL,
                                 status TEXT,              -- To-Do / In-Process
                                 working_hour TEXT,        -- 预估工时
                                 FOREIGN KEY (project_id) REFERENCES project(id),

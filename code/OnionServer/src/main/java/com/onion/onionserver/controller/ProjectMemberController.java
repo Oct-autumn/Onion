@@ -10,9 +10,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.HashMap;
 
 @RestController
-@RequestMapping("/project/{projectId}/team")
+@RequestMapping("/project/info/{projectId}/team")
 @CrossOrigin
 public class ProjectMemberController {
 
@@ -24,19 +25,31 @@ public class ProjectMemberController {
         this.jwtTools = jwtTools;
     }
 
-    // 获取成员列表
+    // 获取成员列表（分页）
     @GetMapping
-    public ResponseEntity<List<ProjectMemberResponseDTO>> list(@PathVariable Long projectId) {
-        List<ProjectMemberResponseDTO> resp = manager.listMembers(projectId).stream().map(m -> {
+    public ResponseEntity<?> list(@PathVariable Long projectId,
+                                  @RequestParam(defaultValue = "1") int page,
+                                  @RequestParam(defaultValue = "10") int pageSize) {
+        List<ProjectMember> all = manager.listMembers(projectId);
+        int fromIndex = Math.max((page - 1) * pageSize, 0);
+        int toIndex = Math.min(fromIndex + pageSize, all.size());
+        List<ProjectMember> paged = all.subList(fromIndex, toIndex);
+
+        List<ProjectMemberResponseDTO> members = paged.stream().map(m -> {
             ProjectMemberResponseDTO dto = new ProjectMemberResponseDTO();
             dto.setId(m.getId());
             dto.setUserId(m.getUserId());
-            dto.setRole(m.getRole());
+            dto.setName(m.getName());
             dto.setStatus(m.getStatus());
             dto.setWorkingHour(m.getWorkingHour());
+            dto.setRole(m.getRole());
             return dto;
         }).toList();
-        return ResponseEntity.ok(resp);
+
+        return ResponseEntity.ok(new HashMap<>() {{
+            put("members", members);
+            put("total", all.size());
+        }});
     }
 
     // 添加成员
@@ -51,20 +64,21 @@ public class ProjectMemberController {
         ProjectMemberResponseDTO resp = new ProjectMemberResponseDTO();
         resp.setId(saved.getId());
         resp.setUserId(saved.getUserId());
+        resp.setName(saved.getName());
         resp.setRole(saved.getRole());
         resp.setStatus(saved.getStatus());
         resp.setWorkingHour(saved.getWorkingHour());
         return ResponseEntity.ok(resp);
     }
 
-    // 删除成员
+    // 删除成员（注意这里的 memberId 实际是 userId）
     @DeleteMapping("/{memberId}")
     public ResponseEntity<Void> delete(@RequestHeader("Authorization") String authorization,
                                        @PathVariable Long projectId,
                                        @PathVariable Long memberId) {
         Integer operatorId = extractUserId(authorization);
         // TODO: 权限校验
-        manager.removeMember(memberId);
+        manager.removeMember(projectId, memberId); // ✅ 改成按 projectId + userId 删除
         return ResponseEntity.ok().build();
     }
 

@@ -8,5 +8,6 @@ public class ProjectMemberResponseDTO {
     private Long userId;
     private String role;
     private String status;
+    private String name;
     private String workingHour;
 }
