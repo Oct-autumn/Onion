@@ -59,16 +59,9 @@ router.beforeEach((to, from, next) => {
     // 管理员路由保护
     if (to.matched.some(r => r.meta && r.meta.requiresAdmin)) {
       try {
-        const userStr = localStorage.getItem('user')
+        const userStr = localStorage.getItem('userInfo')
         const user = userStr ? JSON.parse(userStr) : null
-        const isAdmin =
-          user &&
-          (
-            user.role === 'Admin' ||
-            user.role === 'admin' ||
-            user.role === '管理员' ||
-            user.role === '超级管理员'
-          )
+        const isAdmin = user && user.role === 1
         if (!isAdmin) {
           return next('/project')
         }
