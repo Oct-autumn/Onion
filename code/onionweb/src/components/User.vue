@@ -75,7 +75,7 @@ try {
   currentUser.value = null
 }
 
-const isAdmin = computed(() => currentUser.value?.role === 'Admin')
+const isAdmin = computed(() => currentUser.value?.role === 1)
 
 const addUserDialogVisible = ref(false)
 const newUserForm = ref(null)

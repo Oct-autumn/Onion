@@ -11,7 +11,7 @@
           <h2 class="user-name">{{ currentUser?.name || 'User' }}</h2>
           <p class="user-email">{{ currentUser?.email || 'user@example.com' }}</p>
           <el-tag :type="getRoleType(currentUser?.role)" size="large">
-            {{ currentUser?.role || 'Member' }}
+            {{ roleLabelMap[currentUser?.role] || 'Member' }}
           </el-tag>
         </div>
         <div class="action-section">
@@ -58,17 +58,32 @@
           </el-col>
         </el-row>
 
-        <el-row :gutter="20">
+        <!-- Only show role field for admin users -->
+        <el-row :gutter="20" v-if="isAdmin">
           <el-col :span="12">
             <el-form-item label="Role" prop="role">
-              <el-select v-model="profileForm.role" placeholder="Select role" style="width: 100%">
+              <el-select 
+                v-if="isEditMode" 
+                v-model="profileForm.role" 
+                placeholder="Select role" 
+                style="width: 100%"
+              >
                 <el-option
                     v-for="role in selectableRoles"
-                    :key="role"
-                    :label="role"
-                    :value="role"
+                    :key="role.value"
+                    :label="role.label"
+                    :value="role.value"
                 />
               </el-select>
+              <!-- Non-edit mode: display role as read-only -->
+              <el-tag 
+                v-else 
+                :type="getRoleType(currentUser?.role)" 
+                size="default"
+                style="width: 100%; text-align: center;"
+              >
+                {{ roleLabelMap[currentUser?.role] || 'Member' }}
+              </el-tag>
             </el-form-item>
           </el-col>
         </el-row>
@@ -161,31 +176,35 @@ const profileFormRef = ref(null)
 const passwordFormRef = ref(null)
 
 const currentUser = ref(null)
+// Role options for display (value is the role code number)
 const roleOptions = [
-  'Admin',
-  'Project Manager',
-  'Developer',
-  'Tester',
-  'Designer',
-  'Product Manager',
+  { label: 'Admin', value: 1 },
+  { label: 'Normal User', value: 0 },
+  { label: 'Project Manager', value: 2 },
+  { label: 'Developer', value: 3 },
+  { label: 'Tester', value: 4 },
+  { label: 'Designer', value: 5 },
+  { label: 'Product Manager', value: 6 },
 ]
-const isAdmin = computed(() => currentUser.value?.role === 'Admin')
+const isAdmin = computed(() => currentUser.value?.role === 1)
 const selectableRoles = computed(() =>
-    isAdmin.value ? roleOptions : roleOptions.filter(role => role !== 'Admin')
+    isAdmin.value ? roleOptions : roleOptions.filter(role => role.value !== 1)
 )
-const roleCodeMap = {
-  'Admin': 1,
-  'Project Manager': 2,
-  'Developer': 3,
-  'Tester': 4,
-  'Designer': 5,
-  'Product Manager': 6,
+// Reverse map: role code to label for display
+const roleLabelMap = {
+  0: 'Normal User',
+  1: 'Admin',
+  2: 'Project Manager',
+  3: 'Developer',
+  4: 'Tester',
+  5: 'Designer',
+  6: 'Product Manager',
 }
 
 const profileForm = reactive({
   name: '',
   email: '',
-  role: ''
+  role: 0 // Store as number
 })
 
 const passwordForm = reactive({
@@ -204,7 +223,25 @@ const rules = {
     { type: 'email', message: 'Please enter a valid email address', trigger: 'blur' }
   ],
   role: [
-    { required: true, message: 'Please select a role', trigger: 'change' }
+    { 
+      required: false, // Only required for admin users in edit mode
+      message: 'Please select a role', 
+      trigger: 'change',
+      validator: (rule, value, callback) => {
+        // Only validate role if user is admin and in edit mode
+        if (isAdmin.value && isEditMode.value) {
+          if (value === undefined || value === null || value === '') {
+            callback(new Error('Please select a role'))
+          } else if (typeof value !== 'number') {
+            callback(new Error('Role must be a number'))
+          } else {
+            callback()
+          }
+        } else {
+          callback() // Skip validation for non-admin users or non-edit mode
+        }
+      }
+    }
   ]
 }
 
@@ -233,12 +270,13 @@ const passwordRules = {
 
 const getRoleType = (role) => {
   const roleTypes = {
-    'Admin': 'danger',
-    'Project Manager': 'warning',
-    'Developer': 'primary',
-    'Tester': 'success',
-    'Designer': 'info',
-    'Product Manager': ''
+    0: '', // Normal User
+    1: 'danger', // Admin
+    2: 'warning', // Project Manager
+    3: 'primary', // Developer
+    4: 'success', // Tester
+    5: 'info', // Designer
+    6: '' // Product Manager
   }
   return roleTypes[role] || ''
 }
@@ -252,12 +290,12 @@ onMounted(() => {
       id: parsed.userId,
       name: parsed.username,
       email: parsed.email,
-      role: parsed.role
+      role: parsed.role // Keep as number
     }
     Object.assign(profileForm, {
       name: currentUser.value.name || '',
       email: currentUser.value.email || '',
-      role: currentUser.value.role || ''
+      role: currentUser.value.role ?? 0 // Default to 0 if undefined
     })
   }
 })
@@ -277,7 +315,7 @@ const saveProfile = async () => {
     await profileFormRef.value.validate()
     loading.value = true
 
-    if (!isAdmin.value && profileForm.role === 'Admin') {
+    if (!isAdmin.value && profileForm.role === 1) {
       ElMessage.error('You are not allowed to set the role to Admin')
       loading.value = false
       return
@@ -290,18 +328,25 @@ const saveProfile = async () => {
       return
     }
 
-    const mappedRole = roleCodeMap[profileForm.role]
-    if (mappedRole === undefined) {
-      ElMessage.error('Unsupported role selected')
-      loading.value = false
-      return
-    }
-
+    // 构建 payload，非管理员不包含 role 字段
     const payload = {
       username: profileForm.name.trim(),
       email: profileForm.email.trim(),
-      role: mappedRole,
       user_id: userId,
+    }
+
+    // 只有管理员才能修改角色
+    if (isAdmin.value) {
+      // profileForm.role is already a number
+      if (profileForm.role < 0 || profileForm.role > 6) {
+        ElMessage.error('Unsupported role selected')
+        loading.value = false
+        return
+      }
+      payload.role = profileForm.role
+    } else {
+      // 非管理员不发送 role 字段，或者发送 0 表示不修改角色
+      payload.role = 0
     }
 
     // 使用封装的 axios 实例发送 POST 请求
@@ -312,7 +357,7 @@ const saveProfile = async () => {
       userId: userId,
       username: profileForm.name.trim(),
       email: profileForm.email.trim(),
-      role: profileForm.role,
+      role: isAdmin.value ? profileForm.role : currentUser.value.role, // 非管理员保持原角色 (number)
     }
     // 同样，存储的 key 应为 'userInfo'
     localStorage.setItem('userInfo', JSON.stringify(updatedUser))
@@ -360,8 +405,8 @@ const changePassword = async () => {
     }
 
     const payload = {
-      password: passwordForm.newPassword,
-      old_password: passwordForm.currentPassword,
+      newPassword: passwordForm.newPassword,
+      oldPassword: passwordForm.currentPassword,
       user_id: userId,
     }
 

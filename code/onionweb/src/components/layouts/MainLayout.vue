@@ -63,12 +63,12 @@ const isAdmin = ref(false)
 
 // 获取当前用户信息
 onMounted(() => {
-  const userStr = localStorage.getItem('user')
+  const userStr = localStorage.getItem('userInfo')
   if (userStr) {
     currentUser.value = JSON.parse(userStr)
     const role = currentUser.value?.role
-    // 注意：这里的角色判断值保持原样，因为后端返回的可能还是中文
-    isAdmin.value = role === '超级管理员' || role === 'admin' || role === '管理员'
+    // Check if role is 1 (Admin)
+    isAdmin.value = role === 1
   }
 })
 
