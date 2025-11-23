@@ -44,7 +44,7 @@ public class UserDTO {
     public static class UpdateInfoRequest {
         private String username;
         private String email;
-        private int role;
+        private Integer role;
         private Integer user_id;
     }
 
@@ -58,6 +58,7 @@ public class UserDTO {
     @Data
     public static class GetInfoResponse {
         private List<UserInfo> users;
+        private int total;
 
         public static class UserInfo {
             private Integer id;

@@ -2,6 +2,7 @@ package com.onion.onionserver.manager;
 
 import com.onion.onionserver.model.dao.User;
 import com.onion.onionserver.repo.UserRepo;
+import jakarta.annotation.PostConstruct;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -37,7 +38,7 @@ public class UserManager {
     }
 
     public void updateUser(User user) {
-        if (userRepo.existsById(user.getId()))    {
+        if (userRepo.existsById(user.getId())) {
             user.setUpdateAt(LocalDateTime.now());
             userRepo.save(user);
         }
