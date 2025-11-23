@@ -17,6 +17,30 @@
       </el-table-column>
 
       <el-table-column prop="email" label="Email" />
+
+      <el-table-column prop="role" label="Role" width="180">
+        <template #default="{ row }">
+          <!-- If user is Admin, show as read-only tag -->
+          <el-tag v-if="row.role === 1" type="danger" size="small">
+            {{ roleLabelMap[row.role] }}
+          </el-tag>
+          <!-- For non-admin users, show editable select -->
+          <el-select 
+            v-else
+            v-model="row.role" 
+            placeholder="Select role" 
+            size="small"
+            @change="(val) => updateUserRole(row, val)"
+          >
+            <el-option
+                v-for="role in nonAdminRoleOptions"
+                :key="role.value"
+                :label="role.label"
+                :value="role.value"
+            />
+          </el-select>
+        </template>
+      </el-table-column>
     </el-table>
 
     <div class="pagination-container">
@@ -77,6 +101,26 @@ try {
 
 const isAdmin = computed(() => currentUser.value?.role === 1)
 
+// Role options (excluding Admin role for updating other users)
+const nonAdminRoleOptions = [
+  { label: 'Normal User', value: 0 },
+  { label: 'Project Manager', value: 2 },
+  { label: 'Developer', value: 3 },
+  { label: 'Tester', value: 4 },
+  { label: 'Designer', value: 5 },
+  { label: 'Product Manager', value: 6 },
+]
+
+const roleLabelMap = {
+  0: 'Normal User',
+  1: 'Admin',
+  2: 'Project Manager',
+  3: 'Developer',
+  4: 'Tester',
+  5: 'Designer',
+  6: 'Product Manager',
+}
+
 const addUserDialogVisible = ref(false)
 const newUserForm = ref(null)
 const newUser = ref({ username: '', email: '' })
@@ -99,6 +143,7 @@ const mapUser = (item) => {
     id: item.id ?? item.user_id ?? Date.now(),
     name,
     email: item.email || '',
+    role: item.role ?? 0, // Include role information
   }
 }
 
@@ -112,7 +157,7 @@ const fetchUsers = async () => {
     const result = await request.get('/user/list', {
       params: {
         page: currentPage.value,
-        size: pageSize.value
+        pagenum: pageSize
       }
     });
 
@@ -196,6 +241,42 @@ const addUser = async () => {
     // 同样，这里的错误处理也被简化了
     console.error('Add user failed:', error)
     ElMessage.error(error.message || 'Failed to create user')
+  }
+}
+
+const updateUserRole = async (user, newRole) => {
+  if (!isAdmin.value) {
+    ElMessage.error('Only administrators can perform this action')
+    // Revert the change
+    await fetchUsers()
+    return
+  }
+
+  // Prevent setting role to Admin (value 1)
+  if (newRole === 1) {
+    ElMessage.error('Cannot set user role to Admin')
+    // Revert the change
+    await fetchUsers()
+    return
+  }
+
+  try {
+    const payload = {
+      user_id: user.id,
+      username: user.name,
+      email: user.email,
+      role: newRole
+    }
+
+    await request.post('/user/update', payload)
+    ElMessage.success(`User role updated to ${roleLabelMap[newRole]}`)
+    // Refresh the user list to ensure data consistency
+    await fetchUsers()
+  } catch (error) {
+    console.error('Update user role failed:', error)
+    ElMessage.error(error.message || 'Failed to update user role')
+    // Revert the change on error
+    await fetchUsers()
   }
 }
 </script>
