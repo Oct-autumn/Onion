@@ -1,5 +1,10 @@
 package com.onion.onionserver.controller;
 
+import com.onion.onionserver.model.dao.User;
+import com.onion.onionserver.repo.UserRepo;
+import lombok.extern.java.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,28 +15,45 @@ import com.onion.onionserver.model.dto.RequirementCreateDTO;
 import com.onion.onionserver.model.dto.RequirementStatusDTO;
 import com.onion.onionserver.repo.RequirementRepo;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @RestController
 @CrossOrigin
 public class TaskController {
-
+    Logger logger = LoggerFactory.getLogger(TaskController.class);
     @Autowired
     RequirementRepo requirementRepo;
 
+    @Autowired
+    UserRepo userRepo;
+    
     @GetMapping("/kanban/tasks")
     public ResponseEntity<?> getTasks(@RequestParam long projectId) {
+        //List<Requirement> requirements = requirementRepo.findAllByProjectId(projectId);
+        //ArrayList<RequirementCreateDTO> requirementCreateDTOS = new ArrayList<>();
+        //
+        //for (Requirement requirement : requirements) {
+        //    RequirementCreateDTO requirementCreateDTO = new RequirementCreateDTO();
+        //}
+        
         return ResponseEntity.ok(requirementRepo.findAllByProjectId(projectId));
     }
 
-    @PostMapping("/kanban/tasks")
+    @PostMapping("/kanban/tasks/add")
     public ResponseEntity<?> postTasks(@RequestBody RequirementCreateDTO dto) {
+        logger.error("dto is " + dto);
         Requirement requirement = new Requirement();
         //TODO: 如果assigner为空，从登录数据获取用户id
-        requirement.setAssignerId(dto.getAssignerId());
+        //Integer userId = userRepo.findByUsername(dto.getAssigneer()).getId();
+        requirement.setAssignerId(Long.valueOf(dto.getAssigneer()));
         requirement.setDescription(dto.getDescription());
         requirement.setProjectId(dto.getProjectId());
         requirement.setStatus(dto.getStatus());
         requirement.setTitle(dto.getTitle());
         requirement.setWorkingHour(parseWorkingHourString(dto.getWorkingHour()));
+    
+        logger.error("requirement is " + requirement);
         requirementRepo.save(requirement);
 
         return ResponseEntity.ok(new RequirementStatusDTO(requirement.getStatus()));
