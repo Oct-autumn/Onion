@@ -2,11 +2,13 @@ package com.onion.onionserver.controller;
 
 import com.onion.onionserver.manager.ProjectMemberManager;
 import com.onion.onionserver.model.dao.ProjectMember;
+import com.onion.onionserver.model.dao.User;
 import com.onion.onionserver.model.dto.ProjectMemberAddDTO;
 import com.onion.onionserver.model.dto.ProjectMemberResponseDTO;
 import com.onion.onionserver.util.JwtTools;
 import io.jsonwebtoken.Claims;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -54,10 +56,10 @@ public class ProjectMemberController {
 
     // 添加成员
     @PostMapping
-    public ResponseEntity<ProjectMemberResponseDTO> add(@RequestHeader("Authorization") String authorization,
+    public ResponseEntity<ProjectMemberResponseDTO> add(@AuthenticationPrincipal User authUser,
                                                         @PathVariable Long projectId,
                                                         @RequestBody ProjectMemberAddDTO dto) {
-        Integer operatorId = extractUserId(authorization);
+        Integer operatorId = authUser.getId();
         // TODO: 可以在这里加权限校验，比如 operatorId 是否是项目 owner
 
         ProjectMember saved = manager.addMember(projectId, dto);
@@ -73,10 +75,10 @@ public class ProjectMemberController {
 
     // 删除成员（注意这里的 memberId 实际是 userId）
     @DeleteMapping("/{memberId}")
-    public ResponseEntity<Void> delete(@RequestHeader("Authorization") String authorization,
+    public ResponseEntity<Void> delete(@AuthenticationPrincipal User authUser,
                                        @PathVariable Long projectId,
                                        @PathVariable Long memberId) {
-        Integer operatorId = extractUserId(authorization);
+        Integer operatorId = authUser.getId();
         // TODO: 权限校验
         manager.removeMember(projectId, memberId); // ✅ 改成按 projectId + userId 删除
         return ResponseEntity.ok().build();

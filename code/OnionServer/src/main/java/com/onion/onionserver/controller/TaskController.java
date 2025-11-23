@@ -1,6 +1,7 @@
 package com.onion.onionserver.controller;
 
 import com.onion.onionserver.model.dao.User;
+import com.onion.onionserver.model.dto.RequirementUpdateDTO;
 import com.onion.onionserver.repo.UserRepo;
 import lombok.extern.java.Log;
 import org.slf4j.Logger;
@@ -69,6 +70,26 @@ public class TaskController {
             return ResponseEntity.badRequest().body(ErrorResponseDTO.createFail("requirement id not found"));
         }
         requirement.setStatus(statusDTO.getStatus());
+        requirementRepo.save(requirement);
+        //TODO: 这个API返回什么？任务目前的status？还是"success"?
+        return ResponseEntity.ok(statusDTO);
+    }
+    
+    @PutMapping("/kanban/tasks/single/{id}")
+    public ResponseEntity<?> updateTask(
+            @PathVariable(name = "id") long requirementId,
+            @RequestBody RequirementUpdateDTO statusDTO)
+    {
+        Requirement requirement = requirementRepo.findById(requirementId).orElse(null);
+        if (requirement == null) {
+            return ResponseEntity.badRequest().body(ErrorResponseDTO.createFail("requirement id not found"));
+        }
+        requirement.setDescription(statusDTO.getDescription());
+        requirement.setAssignerId(Long.valueOf(statusDTO.getAssigneer()));
+        requirement.setWorkingHour(parseWorkingHourString(statusDTO.getWorkingHour()));
+        requirement.setTitle(statusDTO.getTitle());
+        requirement.setStatus(statusDTO.getStatus());
+        
         requirementRepo.save(requirement);
         //TODO: 这个API返回什么？任务目前的status？还是"success"?
         return ResponseEntity.ok(statusDTO);

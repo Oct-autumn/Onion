@@ -227,7 +227,7 @@ const saveTask = async () => {
       }
 
       if (editingTask.value) {
-        const res = await request.put(`/kanban/tasks/${editingTask.value.id}`, backendTaskData)
+        const res = await request.put(`/kanban/tasks/single/${editingTask.value.id}`, backendTaskData)
         if (res.status === 200)
           ElMessage.success('Task updated successfully')
           await fetchTasks()

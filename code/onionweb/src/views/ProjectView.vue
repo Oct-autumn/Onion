@@ -27,13 +27,13 @@
       <el-table-column prop="status" label="Status" />
       <el-table-column prop="userName" label="Project Owner" />
       <el-table-column prop="createTime" label="Creation Date">
-        <template #default="scope">
-          {{ formatDate(scope.row.createTime) }}
-        </template>
+<!--        <template #default="scope">-->
+<!--          {{ formatDate(scope.row.createTime) }}-->
+<!--        </template>-->
       </el-table-column>
       <el-table-column prop="expectedCompletion" label="Expected Completion Date">
         <template #default="scope">
-          {{ scope.row.expectedCompletion ? formatDate(scope.row.expectedCompletion) : 'Not Set' }}
+<!--          {{ scope.row.expectedCompletion ? formatDate(scope.row.expectedCompletion) : 'Not Set' }}-->
         </template>
       </el-table-column>
     </el-table>

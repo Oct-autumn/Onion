@@ -1,10 +1,21 @@
 <template>
   <div class="project-detail-page">
-    <!-- Project Basic Information -->
     <el-card class="project-info-card">
+      <!-- 使用 div 包裹头部内容，方便进行 Flexbox 布局 -->
       <div class="project-header">
-        <h2 class="project-name">{{ project.name }}</h2>
-        <p class="team-count">Team Size: {{ project.teamCount }} people</p>
+        <div class="project-main-info">
+          <h2 class="project-name">{{ project.name }}</h2>
+          <p class="team-count">
+            <i class="el-icon-user"></i>
+            Team Size: {{ project.teamCount }} people
+          </p>
+        </div>
+        <div class="project-meta-info">
+        <span class="expected-completion">
+          <i class="el-icon-calendar"></i>
+          Expected Completion: {{ project.expectedCompletion }}
+        </span>
+        </div>
       </div>
     </el-card>
 
@@ -33,7 +44,7 @@
         <el-table-column prop="role" label="Role" />
         <el-table-column label="Actions" width="100">
           <template #default="{ row }">
-            <el-button type="danger" size="mini" @click="deleteMember(row.id)">Delete</el-button>
+            <el-button type="danger" size="mini" @click="deleteMember(row.userId)">Delete</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -66,6 +77,9 @@
         <el-form-item label="Name" prop="name">
           <el-input v-model="newMember.name" placeholder="Please enter name" />
         </el-form-item>
+        <el-form-item label="UserId" prop="userId">
+          <el-input v-model="newMember.userId" placeholder="Please enter userId" />
+        </el-form-item>
         <el-form-item label="Status" prop="status">
           <el-input v-model="newMember.status" placeholder="Please enter status" />
         </el-form-item>
@@ -96,6 +110,7 @@ const projectId = route.params.id
 // Project basic information
 const project = reactive({
   name: '',
+  expectedCompletion: '',
   teamCount: 0
 })
 
@@ -109,7 +124,7 @@ const loading = ref(false)
 
 // Add member dialog visibility
 const addMemberDialogVisible = ref(false)
-const newMember = reactive({ name: '', status: '', workingHour: '', role: '' })
+const newMember = reactive({ name: '', userId: '', status: '', workingHour: '', role: '' })
 
 // Open the add member dialog
 const openAddMemberDialog = () => {
@@ -121,8 +136,11 @@ const openAddMemberDialog = () => {
 const fetchProjectInfo = async () => {
   try {
     const res = await request.get(`/project/info/${projectId}`)
-    project.name = res.data.name
-    project.teamCount = res.data.teamCount
+    console.info("=========  项目详情 ========")
+    console.info(res)
+    project.name = res.name
+    project.expectedCompletion = res.expectedCompletion
+    // project.teamCount = res.teamCount
   } catch (err) {
     console.error(err)
     ElMessage.error('Network error, failed to fetch project information')
@@ -136,8 +154,9 @@ const fetchMembers = async () => {
     const res = await request.get(`/project/info/${projectId}/team`, {
       params: { page: currentPage.value, pageSize: pageSize.value }
     })
-    members.value = res.data.members
-    totalMembers.value = res.data.total
+    members.value = res.members
+    totalMembers.value = res.total
+    project.teamCount = res.total
   } catch (err) {
     console.error(err)
     ElMessage.error('Network error, failed to fetch team members')
@@ -148,16 +167,18 @@ const fetchMembers = async () => {
 
 // Add a new member
 const addMember = async () => {
-  if (!newMember.name || !newMember.status || !newMember.workingHour || !newMember.role) {
+  if (!newMember.name || !newMember.status || !newMember.workingHour || !newMember.role|| !newMember.userId) {
     ElMessage.warning('Please fill in all information')
     return
   }
   try {
     const res = await request.post(`/project/info/${projectId}/team`, newMember)
-    members.value.unshift(res.data.data)
-    project.teamCount++
-    totalMembers.value++
     addMemberDialogVisible.value = false
+    await fetchMembers()
+    // members.value.unshift(res.members)
+    // project.teamCount++
+    // totalMembers.value++
+
     ElMessage.success('Member added successfully')
   } catch (err) {
     console.error(err)
@@ -173,6 +194,7 @@ const deleteMember = async (memberId) => {
     project.teamCount--
     totalMembers.value--
     ElMessage.success('Member deleted successfully')
+    await fetchMembers()
   } catch (err) {
     console.error(err)
     ElMessage.error(err.response?.data?.message || 'Failed to delete member')
@@ -204,26 +226,26 @@ onMounted(async () => {
   padding: 20px;
 }
 
-.project-info-card {
-  padding: 20px;
-}
+/*.project-info-card {*/
+/*  padding: 20px;*/
+/*}*/
 
-.project-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+/*.project-header {*/
+/*  display: flex;*/
+/*  justify-content: space-between;*/
+/*  align-items: center;*/
+/*}*/
 
-.project-name {
-  font-size: 24px;
-  font-weight: 600;
-  color: #303133;
-}
+/*.project-name {*/
+/*  font-size: 24px;*/
+/*  font-weight: 600;*/
+/*  color: #303133;*/
+/*}*/
 
-.team-count {
-  font-size: 16px;
-  color: #606266;
-}
+/*.team-count {*/
+/*  font-size: 16px;*/
+/*  color: #606266;*/
+/*}*/
 
 .card-header h3 {
   margin: 0;
@@ -247,5 +269,105 @@ onMounted(async () => {
 .page-size-select {
   display: flex;
   align-items: center;
+}
+
+/* 卡片整体样式 */
+.project-info-card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease-in-out;
+  overflow: hidden; /* 确保内部元素不会超出圆角 */
+  padding: 20px;
+}
+
+/* 卡片悬停效果 */
+.project-info-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+/* 头部内容区域布局 */
+.project-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+/* 左侧主要信息区域 */
+.project-main-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* 元素之间的间距 */
+}
+
+/* 项目名称样式 */
+.project-name {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #212529;
+  margin: 0;
+  line-height: 1.3;
+}
+
+/* 团队人数样式 */
+.team-count {
+  font-size: 0.95rem;
+  color: #495057;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.team-count i.el-icon-user {
+  color: #86909c;
+  font-size: 1rem;
+}
+
+/* 右侧元信息区域 */
+.project-meta-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+/* 预计完成日期样式 */
+.expected-completion {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background-color: #409eff;
+  color: white;
+  border-radius: 20px; /* 胶囊形状 */
+  font-size: 0.9rem;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
+}
+
+.expected-completion i.el-icon-calendar {
+  font-size: 1rem;
+}
+
+/* 响应式调整：在小屏幕上垂直排列 */
+@media (max-width: 768px) {
+  .project-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .project-meta-info {
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .expected-completion {
+    width: 100%;
+    justify-content: center;
+  }
 }
 </style>
