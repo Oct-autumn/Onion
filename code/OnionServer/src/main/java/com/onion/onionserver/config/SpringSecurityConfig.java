@@ -14,44 +14,24 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 public class SpringSecurityConfig {
-    
     private final JwtFilter jwtFilter;
-    
+
     @Autowired
-    public SpringSecurityConfig(JwtFilter jwtFilter) {
+    SpringSecurityConfig(JwtFilter jwtFilter) {
         this.jwtFilter = jwtFilter;
     }
-    
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        
         http.csrf(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/",
-                                "/index.html",
-                                "/favicon.ico",
-                                // ⭐Static resources produced by Vue build
-                                "/assets/**",
-                                "/js/**",
-                                "/css/**",
-                                "/img/**",
-                                // ⭐ API that should be public
-                                "/login",
-                                "/user/login",
-                                "/register",
-                                "/user/register",
-                                "/Onion_slogan_sentence.png",
-                                "/Onion_slogan_word.png"
-                        )
-                        .permitAll()
+                        .requestMatchers("/user/login", "/user/register").permitAll()
                         .anyRequest().authenticated()
                 )
                 .httpBasic(Customizer.withDefaults());
-        
+
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-        
         return http.build();
     }
 }
