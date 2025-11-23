@@ -58,15 +58,15 @@
           </el-col>
         </el-row>
 
-        <!-- Only show role field for admin users -->
+        <!-- Role field: only admin users can see and edit -->
         <el-row :gutter="20" v-if="isAdmin">
           <el-col :span="12">
             <el-form-item label="Role" prop="role">
               <el-select 
-                v-if="isEditMode" 
                 v-model="profileForm.role" 
                 placeholder="Select role" 
                 style="width: 100%"
+                :disabled="!isEditMode"
               >
                 <el-option
                     v-for="role in selectableRoles"
@@ -75,15 +75,6 @@
                     :value="role.value"
                 />
               </el-select>
-              <!-- Non-edit mode: display role as read-only -->
-              <el-tag 
-                v-else 
-                :type="getRoleType(currentUser?.role)" 
-                size="default"
-                style="width: 100%; text-align: center;"
-              >
-                {{ roleLabelMap[currentUser?.role] || 'Member' }}
-              </el-tag>
             </el-form-item>
           </el-col>
         </el-row>
@@ -224,21 +215,24 @@ const rules = {
   ],
   role: [
     { 
-      required: false, // Only required for admin users in edit mode
+      required: false,
       message: 'Please select a role', 
       trigger: 'change',
       validator: (rule, value, callback) => {
-        // Only validate role if user is admin and in edit mode
-        if (isAdmin.value && isEditMode.value) {
+        // Validate role if in edit mode
+        if (isEditMode.value) {
           if (value === undefined || value === null || value === '') {
             callback(new Error('Please select a role'))
           } else if (typeof value !== 'number') {
             callback(new Error('Role must be a number'))
+          } else if (!isAdmin.value && value === 1) {
+            // Non-admin users cannot select Admin role
+            callback(new Error('You are not allowed to select Admin role'))
           } else {
             callback()
           }
         } else {
-          callback() // Skip validation for non-admin users or non-edit mode
+          callback() // Skip validation in non-edit mode
         }
       }
     }
@@ -315,12 +309,6 @@ const saveProfile = async () => {
     await profileFormRef.value.validate()
     loading.value = true
 
-    if (!isAdmin.value && profileForm.role === 1) {
-      ElMessage.error('You are not allowed to set the role to Admin')
-      loading.value = false
-      return
-    }
-
     const userId = currentUser.value?.id || currentUser.value?.userId
     if (!userId) {
       ElMessage.error('Cannot determine current user information')
@@ -328,16 +316,16 @@ const saveProfile = async () => {
       return
     }
 
-    // 构建 payload，非管理员不包含 role 字段
+    // Build payload
     const payload = {
       username: profileForm.name.trim(),
       email: profileForm.email.trim(),
       user_id: userId,
     }
 
-    // 只有管理员才能修改角色
+    // Only admin users can update role
     if (isAdmin.value) {
-      // profileForm.role is already a number
+      // Validate role value for admin
       if (profileForm.role < 0 || profileForm.role > 6) {
         ElMessage.error('Unsupported role selected')
         loading.value = false
@@ -345,7 +333,7 @@ const saveProfile = async () => {
       }
       payload.role = profileForm.role
     } else {
-      // 非管理员不发送 role 字段，或者发送 0 表示不修改角色
+      // Non-admin users send role: 0 (which means no role change in backend)
       payload.role = 0
     }
 
@@ -357,7 +345,7 @@ const saveProfile = async () => {
       userId: userId,
       username: profileForm.name.trim(),
       email: profileForm.email.trim(),
-      role: isAdmin.value ? profileForm.role : currentUser.value.role, // 非管理员保持原角色 (number)
+      role: isAdmin.value ? profileForm.role : currentUser.value.role // Only update role for admin users
     }
     // 同样，存储的 key 应为 'userInfo'
     localStorage.setItem('userInfo', JSON.stringify(updatedUser))
