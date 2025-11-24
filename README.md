@@ -3,6 +3,7 @@
 ## Project Introduction
 
 Onion is a project management system developed based on the **Spring Boot (backend)** and **Vue 3 (frontend)** technology stack. It aims to provide teams with efficient project collaboration, Kanban task management, user management, and other functions to help teams improve project management efficiency.
+![Onion kanban](doc/kanban.png)
 
 ## Technology Stack
 
