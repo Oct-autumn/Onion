@@ -10,6 +10,8 @@ import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
 import static java.util.Objects.requireNonNull;
 
 @Service
@@ -34,6 +36,9 @@ public class AuthenticationManager {
                 newUser.setUsername("admin");
                 newUser.setEmail("admin@onion.com");
                 newUser.setRole(1);
+                LocalDateTime now = LocalDateTime.now();
+                newUser.setCreateAt(now);
+                newUser.setUpdateAt(now);
                 userRepo.save(newUser);
                 user = newUser;
             }
