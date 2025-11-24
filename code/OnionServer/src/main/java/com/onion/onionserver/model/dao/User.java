@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     @Column(name = "username", nullable = false, length = 50)
     private String username;
@@ -26,9 +26,6 @@ public class User {
 
     @Column(name = "role", nullable = false)
     private int role; // 0: normal user, 1: admin
-
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    private UserAuth userAuth;
 
     @Column(name = "create_at", nullable = false)
     private LocalDateTime createAt;

@@ -12,6 +12,15 @@ CREATE TABLE user (
                       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- user_auth 表
+
+CREATE TABLE user_auth (
+                            id INTEGER PRIMARY KEY,
+                            hash VARCHAR(256) NOT NULL,
+                            salt VARCHAR(32) NOT NULL,
+                            FOREIGN KEY (id) REFERENCES user(id)
+);
+
 -- project 表（注意时间字段统一成 created_at / updated_at）
 CREATE TABLE project (
                          id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -19,6 +28,7 @@ CREATE TABLE project (
                          description TEXT,
                          expected_completion TEXT,
                          owner_id INTEGER NOT NULL,
+                         status TEXT NOT NULL DEFAULT 'NOT_STARTED',
                          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
                          updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
                          FOREIGN KEY (owner_id) REFERENCES user(id)
@@ -30,8 +40,28 @@ CREATE TABLE project_member (
                                 project_id INTEGER NOT NULL,
                                 user_id INTEGER NOT NULL,
                                 role TEXT NOT NULL,       -- 开发者/测试员/项目经理
+                                name TEXT NOT NULL,
                                 status TEXT,              -- To-Do / In-Process
                                 working_hour TEXT,        -- 预估工时
                                 FOREIGN KEY (project_id) REFERENCES project(id),
                                 FOREIGN KEY (user_id) REFERENCES user(id)
 );
+
+-- requirement 表
+CREATE TABLE requirement (
+                             id INTEGER PRIMARY KEY AUTOINCREMENT,
+                             title TEXT NOT NULL,
+                             description TEXT NOT NULL,
+                             assigner_id INTEGER NOT NULL,
+                             working_hour REAL NOT NULL,
+                             status TEXT NOT NULL,
+                             project_id INTEGER NOT NULL,
+                             FOREIGN KEY (assigner_id) REFERENCES user(id),
+                             FOREIGN KEY (project_id) REFERENCES project(id)
+);
+
+DROP TABLE IF EXISTS user;
+DROP TABLE IF EXISTS project;
+DROP TABLE IF EXISTS project_member;
+DROP TABLE IF EXISTS requirement;
+DROP TABLE IF EXISTS user_auth;

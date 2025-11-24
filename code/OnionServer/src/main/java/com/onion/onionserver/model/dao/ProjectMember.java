@@ -20,6 +20,10 @@ public class ProjectMember {
     @Column(nullable = false)
     private String role;
 
+    @Column(nullable = false)
+    private String name;
+
+
     @Column
     private String status;
 

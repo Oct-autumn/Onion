@@ -6,8 +6,11 @@ import com.onion.onionserver.repo.UserAuthRepo;
 import com.onion.onionserver.repo.UserRepo;
 import com.onion.onionserver.util.HashTools;
 import com.onion.onionserver.util.RandTools;
+import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
+
+import static java.util.Objects.requireNonNull;
 
 @Service
 public class AuthenticationManager {
@@ -19,9 +22,34 @@ public class AuthenticationManager {
         this.userAuthRepo = userAuthRepo;
     }
 
-    public void createAuth(Long user_id, String password) {
+    @PostConstruct
+    public void init() {
+        User user;
+        {
+            var result = userRepo.findById(0);
+            if (result.isPresent()) {
+                user = result.get();
+            } else {
+                var newUser = new User();
+                newUser.setUsername("admin");
+                newUser.setEmail("admin@onion.com");
+                newUser.setRole(1);
+                userRepo.save(newUser);
+                user = newUser;
+            }
+        }
+
+        {
+            var result = userAuthRepo.findById(user.getId());
+            if (result.isEmpty()) {
+                createAuth(user.getId(), "AdminAdmin");
+            }
+        }
+    }
+
+    public void createAuth(Integer user_id, String password) {
         var user = userRepo.findById(user_id).orElse(null);
-        if (user != null) {
+        if (user == null) {
             throw new RuntimeException("User not exist. This should not happen.");
         }
 
@@ -31,7 +59,7 @@ public class AuthenticationManager {
         hashString = HashTools.stringToSHA256(hashString);
 
         UserAuth userAuth = new UserAuth();
-        userAuth.setId(user_id);
+        userAuth.setUser(user);
         userAuth.setSalt(salt);
         userAuth.setHash(hashString);
         userAuthRepo.save(userAuth);
@@ -43,7 +71,7 @@ public class AuthenticationManager {
             return null;
         }
 
-        UserAuth userAuth = user.getUserAuth();
+        UserAuth userAuth = requireNonNull(userAuthRepo.findById(user.getId()).orElse(null), "UserAuth not found for user. This should not happen.");
         String hashString = HashTools.stringToSHA256(password);
         hashString += userAuth.getSalt();
         hashString = HashTools.stringToSHA256(hashString);
@@ -55,7 +83,21 @@ public class AuthenticationManager {
         }
     }
 
-    public void updatePassword(Long user_id, String newPassword) {
+    public boolean verifyPassword(Integer user_id, String password) {
+        UserAuth userAuth = userAuthRepo.findById(user_id).orElse(null);
+
+        if (userAuth == null) {
+            throw new EntityNotFoundException();
+        }
+
+        String hashString = HashTools.stringToSHA256(password);
+        hashString += userAuth.getSalt();
+        hashString = HashTools.stringToSHA256(hashString);
+
+        return hashString.equals(userAuth.getHash());
+    }
+
+    public void updatePassword(Integer user_id, String newPassword) {
         UserAuth userAuth = userAuthRepo.findById(user_id).orElse(null);
 
         if (userAuth == null) {

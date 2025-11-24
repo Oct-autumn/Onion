@@ -2,6 +2,7 @@ package com.onion.onionserver.manager;
 
 import com.onion.onionserver.model.dao.Project;
 import com.onion.onionserver.model.dto.ProjectCreateDTO;
+import com.onion.onionserver.model.enums.ProjectStatus;
 import com.onion.onionserver.repo.ProjectRepo;
 import org.springframework.stereotype.Component;
 
@@ -16,12 +17,13 @@ public class ProjectManager {
         this.projectRepo = projectRepo;
     }
 
-    public Project createProject(ProjectCreateDTO dto, Long ownerId) {
+    public Project createProject(ProjectCreateDTO dto, Integer ownerId) {
         Project project = new Project();
         project.setName(dto.getName());
         project.setDescription(dto.getDescription());
         project.setExpectedCompletion(dto.getExpectedCompletion());
         project.setOwnerId(ownerId);
+        project.setStatus(dto.getStatus() != null ? dto.getStatus() : ProjectStatus.NOT_STARTED); // Default to NOT_STARTED
         project.setCreatedAt(LocalDateTime.now());
         project.setUpdatedAt(LocalDateTime.now());
         return projectRepo.save(project);
@@ -34,5 +36,9 @@ public class ProjectManager {
     public Project getProject(Long id) {
         return projectRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
+    }
+    
+    public List<Project> projectListByOwnerId(Integer ownerId){
+        return projectRepo.findByOwnerId(ownerId);
     }
 }

@@ -1,13 +1,11 @@
 <template>
   <div class="user-view">
-    <!-- 顶部中间的新增用户按钮（仅管理员可见） -->
     <div v-if="isAdmin" class="add-user-top">
-      <el-button type="primary" @click="showAddUserDialog">新增用户</el-button>
+      <el-button type="primary" @click="showAddUserDialog">Add User</el-button>
     </div>
 
-    <!-- 团队成员列表（公司员工总览，仅姓名与邮箱） -->
-    <el-table :data="paginatedMembers" style="width: 100%">
-      <el-table-column prop="name" label="成员姓名" width="200">
+    <el-table :data="users" style="width: 100%" :loading="loading">
+      <el-table-column prop="name" label="Name" width="220">
         <template #default="{ row }">
           <div class="member-info">
             <el-avatar :size="32" :src="row.avatar" class="member-avatar">
@@ -17,39 +15,63 @@
           </div>
         </template>
       </el-table-column>
-      
-      <!-- 仅保留邮箱列，不展示角色/状态/操作列 -->
-      <el-table-column prop="email" label="邮箱" />
+
+      <el-table-column prop="email" label="Email" />
+
+      <el-table-column prop="role" label="Role" width="180">
+        <template #default="{ row }">
+          <!-- If user is Admin, show as read-only tag -->
+          <el-tag v-if="row.role === 1" type="danger" size="small">
+            {{ roleLabelMap[row.role] }}
+          </el-tag>
+          <!-- For non-admin users, show editable select -->
+          <el-select 
+            v-else
+            v-model="row.role" 
+            placeholder="Select role" 
+            size="small"
+            @change="(val) => updateUserRole(row, val)"
+          >
+            <el-option
+                v-for="role in nonAdminRoleOptions"
+                :key="role.value"
+                :label="role.label"
+                :value="role.value"
+            />
+          </el-select>
+        </template>
+      </el-table-column>
     </el-table>
 
-    <!-- 分页组件 -->
     <div class="pagination-container">
       <el-pagination
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
-        :page-sizes="[5, 10, 20, 50]"
-        :total="teamMembers.length"
-        layout="total, sizes, prev, pager, next, jumper"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
+          v-model:current-page="currentPage"
+          :page-size="pageSize"
+          :total="total"
+          layout="total, prev, pager, next"
+          @current-change="handleCurrentChange"
       />
     </div>
 
-    <el-dialog v-model="addUserDialogVisible" title="新增用户" width="480px">
-      <el-form :model="newUser" :rules="newUserRules" ref="newUserForm" label-width="80px">
-        <el-form-item label="姓名" prop="name">
-          <el-input v-model="newUser.name" placeholder="请输入姓名" />
+    <el-dialog v-model="addUserDialogVisible" title="Add User" width="480px">
+      <el-form :model="newUser" :rules="newUserRules" ref="newUserForm" label-width="90px">
+        <el-form-item label="Username" prop="username">
+          <el-input v-model="newUser.username" placeholder="Enter username" />
         </el-form-item>
-        <el-form-item label="邮箱" prop="email">
-          <el-input v-model="newUser.email" placeholder="请输入邮箱" />
+        <el-form-item label="Email" prop="email">
+          <el-input v-model="newUser.email" placeholder="Enter email" />
         </el-form-item>
-        <el-alert type="info" :closable="false" show-icon
-          title="新用户默认密码为 123456（仅用于本地测试）" />
+        <el-alert
+            type="info"
+            :closable="false"
+            show-icon
+            title="New users receive the default password 123456"
+        />
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="addUserDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="addUser">确定新增</el-button>
+          <el-button @click="addUserDialogVisible = false">Cancel</el-button>
+          <el-button type="primary" @click="addUser">Create</el-button>
         </span>
       </template>
     </el-dialog>
@@ -57,151 +79,210 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, computed, onMounted, watch } from 'vue'
+import { ElMessage } from 'element-plus'
+// 1. 确保已导入封装的 axios 实例
+import request from "@/utils/request.js";
 
-// 响应式数据（用户页不包含新增弹窗）
-
-// 分页相关
 const currentPage = ref(1)
-const pageSize = ref(10)
+const pageSize = 20
+const total = ref(0)
+const loading = ref(false)
 
-// 当前用户与权限
 const currentUser = ref(null)
 try {
-  const userStr = localStorage.getItem('user')
+  // 注意：这里的 'user' key 要和你登录时存储的一致，之前我们用的是 'userInfo'
+  // 如果登录时是 localStorage.setItem('userInfo', ...)，这里也要对应修改
+  const userStr = localStorage.getItem('userInfo')
   currentUser.value = userStr ? JSON.parse(userStr) : null
 } catch (_) {
   currentUser.value = null
 }
 
-const isAdmin = computed(() => {
-  const role = currentUser.value?.role
-  return role === '超级管理员' || role === 'admin' || role === '管理员'
-})
+const isAdmin = computed(() => currentUser.value?.role === 1)
 
-// 新增用户对话框
+// Role options (excluding Admin role for updating other users)
+const nonAdminRoleOptions = [
+  { label: 'Normal User', value: 0 },
+  { label: 'Project Manager', value: 2 },
+  { label: 'Developer', value: 3 },
+  { label: 'Tester', value: 4 },
+  { label: 'Designer', value: 5 },
+  { label: 'Product Manager', value: 6 },
+]
+
+const roleLabelMap = {
+  0: 'Normal User',
+  1: 'Admin',
+  2: 'Project Manager',
+  3: 'Developer',
+  4: 'Tester',
+  5: 'Designer',
+  6: 'Product Manager',
+}
+
 const addUserDialogVisible = ref(false)
 const newUserForm = ref(null)
-const newUser = ref({ name: '', email: '' })
+const newUser = ref({ username: '', email: '' })
 const newUserRules = {
-  name: [
-    { required: true, message: '请输入姓名', trigger: 'blur' },
-    { min: 2, max: 20, message: '长度 2-20 个字符', trigger: 'blur' }
+  username: [
+    { required: true, message: 'Please enter a username', trigger: 'blur' },
+    { min: 2, max: 20, message: 'Username must be 2-20 characters', trigger: 'blur' }
   ],
   email: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email', message: '邮箱格式不正确', trigger: 'blur' }
+    { required: true, message: 'Please enter an email', trigger: 'blur' },
+    { type: 'email', message: 'Invalid email format', trigger: 'blur' }
   ]
 }
 
-// 团队成员数据（仅姓名与邮箱）
-const teamMembers = ref([
-  { id: 2, name: '张三', email: 'zhangsan@example.com' },
-  { id: 3, name: '李四', email: 'lisi@example.com' },
-  { id: 9, name: '王五', email: 'wangwu@example.com' },
-  { id: 10, name: '赵六', email: 'zhaoliu@example.com' },
-  { id: 11, name: '钱七', email: 'qianqi@example.com' },
-  { id: 12, name: '孙八', email: 'sunba@example.com' },
-  { id: 13, name: '周九', email: 'zhoujiu@example.com' },
-  { id: 14, name: '吴十', email: 'wushi@example.com' }
-])
+const users = ref([])
 
-// 新增/邀请相关移除（用户页仅浏览+管理员删除）
+const mapUser = (item) => {
+  const name = item.name || item.username || item.email?.split('@')[0] || 'Unknown'
+  return {
+    id: item.id ?? item.user_id ?? Date.now(),
+    name,
+    email: item.email || '',
+    role: item.role ?? 0, // Include role information
+  }
+}
 
-// 计算属性：分页后的成员列表
-const paginatedMembers = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
-  return teamMembers.value.slice(start, end)
-})
+// 2. 修改 fetchUsers 函数
+const fetchUsers = async () => {
+  if (!isAdmin.value) return
+  loading.value = true
+  try {
+    // 使用 request.get 替代 fetch
+    // 注意：get 请求的参数可以直接放在第二个参数的 params 对象里
+    const result = await request.get('/user/list', {
+      params: {
+        page: currentPage.value,
+        pagenum: pageSize
+      }
+    });
 
-// 角色渲染已移除
-
-// 分页事件处理
-const handleSizeChange = (val) => {
-  pageSize.value = val
-  currentPage.value = 1 // 重置到第一页
+    // 由于我们在 axios 响应拦截器中已经 return response.data，
+    // 所以这里的 result 直接就是后端返回的数据体
+    const list = Array.isArray(result?.data) ? result.data : Array.isArray(result) ? result : []
+    users.value = list.map(mapUser)
+    total.value = result?.total ?? list.length ?? 0
+  } catch (error) {
+    // 错误处理被大大简化，因为 axios 拦截器已经处理了网络错误和 4xx/5xx 状态码
+    console.error('Fetch users error:', error)
+    // error 对象是我们在响应拦截器中 reject 的内容，它包含了 message
+    ElMessage.error(error.message || 'Failed to load users')
+    users.value = []
+    total.value = 0
+  } finally {
+    loading.value = false
+  }
 }
 
 const handleCurrentChange = (val) => {
   currentPage.value = val
+  fetchUsers()
 }
 
-// 显示新增用户对话框
+onMounted(() => {
+  if (isAdmin.value) {
+    fetchUsers()
+  }
+})
+
+watch(isAdmin, (val) => {
+  if (val) {
+    fetchUsers()
+  } else {
+    users.value = []
+    total.value = 0
+  }
+})
+
 const showAddUserDialog = () => {
   if (!isAdmin.value) {
-    ElMessage.error('仅管理员可进行此操作')
+    ElMessage.error('Only administrators can perform this action')
     return
   }
-  newUser.value = { name: '', email: '' }
+  newUser.value = { username: '', email: '' }
   addUserDialogVisible.value = true
 }
 
-// 新增用户（默认密码 123456，仅前端演示）
+// 3. 修改 addUser 函数
 const addUser = async () => {
   if (!isAdmin.value) {
-    ElMessage.error('仅管理员可进行此操作')
+    ElMessage.error('Only administrators can perform this action')
     return
   }
   if (!newUserForm.value) return
   try {
     await newUserForm.value.validate()
-    const exists = teamMembers.value.some(u => u.email === newUser.value.email)
+    const exists = users.value.some(u => u.email === newUser.value.email)
     if (exists) {
-      ElMessage.error('该邮箱已存在')
+      ElMessage.error('Email already exists')
       return
     }
-    teamMembers.value.unshift({
-      id: Date.now(),
-      name: newUser.value.name.trim(),
-      email: newUser.value.email.trim()
-    })
+
+    const payload = {
+      email: newUser.value.email.trim(),
+      username: newUser.value.username.trim(),
+      password: '123456',
+    }
+
+    // 使用 request.post 替代 fetch
+    // post 的第二个参数直接是请求体 payload
+    await request.post('/user/register', payload);
+
+    // 如果请求成功，axios 会返回响应数据，我们这里不需要处理，直接执行后续操作
+    currentPage.value = 1
+    await fetchUsers()
     addUserDialogVisible.value = false
-    ElMessage.success('用户已创建（默认密码：123456）')
-  } catch (e) {
-    // 校验失败
+    ElMessage.success('User created (default password: 123456)')
+  } catch (error) {
+    // 同样，这里的错误处理也被简化了
+    console.error('Add user failed:', error)
+    ElMessage.error(error.message || 'Failed to create user')
   }
 }
 
-// 删除成员
-const removeMember = (member) => {
+const updateUserRole = async (user, newRole) => {
   if (!isAdmin.value) {
-    ElMessage.error('仅管理员可进行此操作')
+    ElMessage.error('Only administrators can perform this action')
+    // Revert the change
+    await fetchUsers()
     return
   }
-  if (member.role === '项目负责人') {
-    ElMessage.warning('不能删除项目负责人')
+
+  // Prevent setting role to Admin (value 1)
+  if (newRole === 1) {
+    ElMessage.error('Cannot set user role to Admin')
+    // Revert the change
+    await fetchUsers()
     return
   }
-  
-  ElMessageBox.confirm(
-    `确定要删除团队成员「${member.name}」吗？`,
-    '删除确认',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning',
+
+  try {
+    const payload = {
+      user_id: user.id,
+      username: user.name,
+      email: user.email,
+      role: newRole
     }
-  ).then(() => {
-    const index = teamMembers.value.findIndex(m => m.id === member.id)
-    if (index > -1) {
-      teamMembers.value.splice(index, 1)
-      ElMessage.success('成员已删除')
-      
-      // 如果删除后当前页没有数据，回到上一页
-      const totalPages = Math.ceil(teamMembers.value.length / pageSize.value)
-      if (currentPage.value > totalPages && totalPages > 0) {
-        currentPage.value = totalPages
-      }
-    }
-  }).catch(() => {
-    // 用户取消删除
-  })
+
+    await request.post('/user/update', payload)
+    ElMessage.success(`User role updated to ${roleLabelMap[newRole]}`)
+    // Refresh the user list to ensure data consistency
+    await fetchUsers()
+  } catch (error) {
+    console.error('Update user role failed:', error)
+    ElMessage.error(error.message || 'Failed to update user role')
+    // Revert the change on error
+    await fetchUsers()
+  }
 }
 </script>
 
 <style scoped>
+/* ... (样式部分保持不变) ... */
 .user-view {
   padding: 20px;
 }
@@ -232,14 +313,12 @@ const removeMember = (member) => {
   gap: 10px;
 }
 
-/* 分页样式 */
 .pagination-container {
   margin-top: 20px;
   display: flex;
   justify-content: center;
 }
 
-/* 表格样式优化 */
 :deep(.el-table) {
   border-radius: 8px;
   overflow: hidden;
@@ -254,13 +333,11 @@ const removeMember = (member) => {
   padding: 12px 0;
 }
 
-/* 按钮样式 */
 :deep(.el-button--small) {
   padding: 5px 10px;
   font-size: 12px;
 }
 
-/* 标签样式 */
 :deep(.el-tag) {
   font-weight: 500;
 }

@@ -27,7 +27,6 @@ public class SpringSecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/user/login", "/user/register").permitAll()
-                        .requestMatchers("/project/**").permitAll()   // 👈 临时放开 Project
                         .anyRequest().authenticated()
                 )
                 .httpBasic(Customizer.withDefaults());

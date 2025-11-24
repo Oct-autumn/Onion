@@ -9,7 +9,7 @@
           background-color="#f5f5f5"
           active-text-color="#409EFF"
       >
-        <el-menu-item index="info">项目详情</el-menu-item>
+        <el-menu-item index="info">Project Details</el-menu-item>
         <el-menu-item index="kanban">Kanban</el-menu-item>
 		<el-menu-item index="chart">Chart</el-menu-item>
       </el-menu>

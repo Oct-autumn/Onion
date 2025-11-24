@@ -1,7 +1,6 @@
 <template>
   <div class="login-container">
       <div class="login-wrapper">
-          <!-- Left side - Image -->
           <div class="image-section">
           <div class="image-content">
               <h1 class="welcome-title">Welcome Back</h1>
@@ -12,7 +11,6 @@
         </div>
       </div>
 
-      <!-- Right side - Login Form -->
       <div class="form-section">
         <el-card class="login-card">
           <template #header>
@@ -75,18 +73,17 @@
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
+import request from '@/utils/request.js'
 
 const router = useRouter()
 const loginFormRef = ref()
 const loading = ref(false)
 
-// Form data
 const loginForm = reactive({
   email: '',
   password: ''
 })
 
-// Form validation rules
 const rules = {
   email: [
     { required: true, message: 'Please enter your email', trigger: 'blur' },
@@ -98,63 +95,42 @@ const rules = {
   ]
 }
 
-// Submit form
-const submitForm = async () => {
-  if (!loginFormRef.value) return
-  
-  await loginFormRef.value.validate(async (valid) => {
-    if (valid) {
-      loading.value = true
-      try {
-        // 测试用户验证（用于前端测试，支持管理员与普通用户）
-        const testUsers = [
-          { id: 1, name: '超级管理员', email: 'admin@onion.com', password: 'admin123', role: '超级管理员' },
-          { id: 2, name: '张三', email: 'zhangsan@example.com', password: 'pass123', role: '开发者' },
-          { id: 3, name: '李四', email: 'lisi@example.com', password: 'pass123', role: '设计师' }
-        ]
-        const matched = testUsers.find(u => u.email === loginForm.email && u.password === loginForm.password)
-        if (matched) {
-          localStorage.setItem('token', `test-token-${matched.id}`)
-          localStorage.setItem('user', JSON.stringify({ id: matched.id, name: matched.name, email: matched.email, role: matched.role }))
-          ElMessage.success('登录成功！(测试用户)')
-          router.push('/')
-          return
-        }
+const submitForm = async () => { // 确保外层函数是 async
+  if (!loginFormRef.value) return;
 
-        // Call backend API
-        const response = await fetch('/api/user/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: loginForm.email,
-            password: loginForm.password
-          })
-        })
-        
-        if (response.ok) {
-          ElMessage.success('Login successful!')
-          router.push('/dashboard')
-        } else {
-          const error = await response.json()
-          ElMessage.error(error.message || 'Login failed')
-        }
-      } catch (error) {
-        ElMessage.error('Network error, please try again later')
-        console.error('Login error:', error)
-      } finally {
-        loading.value = false
-      }
+  // 注意：validate 的回调函数不能是 async！需将 await 移到 validate 外部
+  const isValid = await loginFormRef.value.validate(); // 先执行校验，获取结果
+
+  if (isValid) { // 校验通过再执行请求
+    loading.value = true;
+    try {
+      // 直接使用封装的 request 发起请求（无需嵌套 try）
+      const response = await request.post('/user/login', {
+        email: loginForm.email,
+        password: loginForm.password
+      });
+
+      // 登录成功：存储 Token 和用户信息
+      const { authToken, userId, username, role } = response;
+      localStorage.setItem('token', authToken); // 与 axios 封装中读取的 key 一致
+      localStorage.setItem('userInfo', JSON.stringify({ userId, username, email: loginForm.email, role }));
+
+      ElMessage.success('Login successful!');
+      router.push('/project');
+    } catch (error) {
+      // 捕获请求错误（包括网络错误、后端返回的错误）
+      ElMessage.error(error.message || 'Login failed');
+      console.error('Login error:', error);
+    } finally {
+      loading.value = false; // 无论成功失败，都关闭加载
     }
-  })
-}
+  }
+};
 
-// Reset form
 const resetForm = () => {
   if (!loginFormRef.value) return
-loginFormRef.value.resetFields()
-}
+  loginFormRef.value.resetFields()
+};
 </script>
 
 <style scoped>

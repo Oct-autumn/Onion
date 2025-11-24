@@ -5,6 +5,7 @@ import lombok.Data;
 @Data
 public class ProjectMemberAddDTO {
     private Long userId;
+    private String name;
     private String role;
     private String status;
     private String workingHour;
