@@ -43,4 +43,18 @@ public class ProjectMemberManager {
     public Optional<ProjectMember> findMember(Long projectId, Long userId) {
         return repo.findByProjectIdAndUserId(projectId, userId);
     }
+    
+    public ProjectMember updateMember(Long projectId, Long userId, ProjectMemberAddDTO dto) {
+        
+        ProjectMember member = repo.findByProjectIdAndUserId(projectId, userId)
+                .orElseThrow(() -> new RuntimeException("Member not found"));
+        
+        // 更新字段
+        //member.setName(dto.getName());
+        //member.setRole(dto.getRole());
+        member.setStatus(dto.getStatus());
+        member.setWorkingHour(dto.getWorkingHour());
+        
+        return repo.save(member);
+    }
 }

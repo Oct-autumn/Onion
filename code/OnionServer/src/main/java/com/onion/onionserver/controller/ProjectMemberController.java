@@ -61,8 +61,23 @@ public class ProjectMemberController {
                                                         @RequestBody ProjectMemberAddDTO dto) {
         Integer operatorId = authUser.getId();
         // TODO: 可以在这里加权限校验，比如 operatorId 是否是项目 owner
-
         ProjectMember saved = manager.addMember(projectId, dto);
+        ProjectMemberResponseDTO resp = new ProjectMemberResponseDTO();
+        resp.setId(saved.getId());
+        resp.setUserId(saved.getUserId());
+        resp.setName(saved.getName());
+        resp.setRole(saved.getRole());
+        resp.setStatus(saved.getStatus());
+        resp.setWorkingHour(saved.getWorkingHour());
+        return ResponseEntity.ok(resp);
+    }
+    
+    @PutMapping
+    public ResponseEntity<ProjectMemberResponseDTO> update(@AuthenticationPrincipal User authUser,
+                                                        @PathVariable Long projectId,
+                                                        @RequestBody ProjectMemberAddDTO dto) {
+       
+        ProjectMember saved = manager.updateMember(projectId,dto.getUserId(), dto);
         ProjectMemberResponseDTO resp = new ProjectMemberResponseDTO();
         resp.setId(saved.getId());
         resp.setUserId(saved.getUserId());

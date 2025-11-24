@@ -37,11 +37,64 @@
           style="width: 100%; margin-bottom: 16px;"
           v-loading="loading"
           element-loading-text="Loading..."
+          @cell-click="handleCellClick"
       >
         <el-table-column prop="name" label="Name" />
-        <el-table-column prop="status" label="Status" />
-        <el-table-column prop="workingHour" label="Working Hours" />
-        <el-table-column prop="role" label="Role" />
+        <el-table-column prop="role" label="Role">
+          <template #default="scope">
+    <span :style="{
+      color: {
+        'Manager': '#409eff',
+        'Developer': '#67c23a',
+        'QA': '#e6a23c',
+        'DevOps': '#f56c6c'
+      }[scope.row.role] || 'inherit',
+      fontWeight: '500'
+    }">
+      {{ scope.row.role }}
+    </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="status" label="Status">
+          <template #default="scope">
+            <el-select
+                v-if="scope.row.userId === editingRowId && scope.column.label === 'Status'"
+                v-model="scope.row.status"
+                @change="handleSave(scope.row)"
+                style="width: 100%;"
+                placeholder="Select status"
+            >
+              <el-option label="Working" value="Working"></el-option>
+              <el-option label="Leave" value="Leave"></el-option>
+            </el-select>
+            <span
+                v-else
+                :style="{
+          color: scope.row.status === 'Working' ? '#67c23a' : '#f56c6c',
+          fontWeight: '500'
+        }"
+            >
+        {{ scope.row.status }}
+      </span>
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="workingHour" label="Working Hours">
+          <template #default="scope">
+            <el-input
+                v-if="scope.row.userId === editingRowId && scope.column.label === 'Working Hours'"
+                v-model="scope.row.workingHour"
+                @blur="handleSave(scope.row)"
+                @keyup.enter="handleSave(scope.row)"
+                type="number"
+                placeholder="Enter working hours"
+            />
+            <span v-else>
+        {{ scope.row.workingHour }}
+      </span>
+          </template>
+        </el-table-column>
+
         <el-table-column label="Actions" width="100">
           <template #default="{ row }">
             <el-button type="danger" size="mini" @click="deleteMember(row.userId)">Delete</el-button>
@@ -81,13 +134,21 @@
           <el-input v-model="newMember.userId" placeholder="Please enter userId" />
         </el-form-item>
         <el-form-item label="Status" prop="status">
-          <el-input v-model="newMember.status" placeholder="Please enter status" />
+          <el-select v-model="newMember.status" placeholder="Please select status">
+            <el-option label="Working" value="Working"></el-option>
+            <el-option label="Leave" value="Leave"></el-option>
+          </el-select>
         </el-form-item>
         <el-form-item label="Working Hours" prop="workingHour">
           <el-input v-model="newMember.workingHour" placeholder="Please enter working hours" />
         </el-form-item>
-        <el-form-item label="Role" prop="role">
-          <el-input v-model="newMember.role" placeholder="Please enter role" />
+        <el-form-item label="Role" prop="role" >
+          <el-select v-model="newMember.role" placeholder="Please select role">
+            <el-option label="Manager" value="Manager"></el-option>
+            <el-option label="Developer" value="Developer"></el-option>
+            <el-option label="QA" value="QA"></el-option>
+            <el-option label="DevOps" value="DevOps"></el-option>
+          </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -106,6 +167,8 @@ import request from '@/utils/request'
 
 const route = useRoute()
 const projectId = route.params.id
+
+const editingRowId = ref(null)
 
 // Project basic information
 const project = reactive({
@@ -131,6 +194,23 @@ const openAddMemberDialog = () => {
   Object.assign(newMember, { name: '', status: '', workingHour: '', role: '' })
   addMemberDialogVisible.value = true
 }
+
+
+// 根据角色返回对应的 CSS 类名
+const getRoleClass = (role) => {
+  switch (role) {
+    case 'Manager':
+      return 'role-manager';
+    case 'Developer':
+      return 'role-developer';
+    case 'QA':
+      return 'role-qa';
+    case 'DevOps':
+      return 'role-devops';
+    default:
+      return '';
+  }
+};
 
 // Fetch project basic information
 const fetchProjectInfo = async () => {
@@ -219,33 +299,54 @@ onMounted(async () => {
   await fetchProjectInfo()
   await fetchMembers()
 })
+
+
+// 开始编辑
+const handleEdit = (row) => {
+  console.info("=====handleEdit ==")
+  console.info("row ==== ")
+  console.info(row.id)
+  editingRowId.value = row.userId
+}
+
+// 点击单元格时进入编辑状态
+const handleCellClick = (row, column) => {
+  console.info("=====handleCellClick ==")
+  console.log('点击可编辑列，userId：', row.userId, '列的 fixed 值：', column.label)
+  if (column.label === 'Status' || column.label === 'Working Hours') {
+    console.log('点击可编辑列，userId：', row.userId, '列的 fixed 值：', column.fixed)
+    editingRowId.value = row.userId
+  }
+  console.info("=====editingRowId ==" + editingRowId)
+
+}
+
+// 保存编辑
+const handleSave = async (row) => {
+  try {
+    console.info("====handleSave=====")
+    await request.put(`/project/info/${projectId}/team`, {
+      userId: row.userId, // 必须包含 userId，以便后端识别是更新操作
+      name: row.name,
+      status: row.status,
+      workingHour: row.workingHour,
+      role: row.role
+    })
+    ElMessage.success('Member updated successfully')
+    editingRowId.value = null // 退出编辑状态
+  } catch (err) {
+    console.error(err)
+    ElMessage.error(err.response?.data?.message || 'Failed to update member')
+    // 如果更新失败，可以回滚数据
+  }
+  await fetchMembers()
+}
 </script>
 
 <style scoped>
 .project-detail-page {
   padding: 20px;
 }
-
-/*.project-info-card {*/
-/*  padding: 20px;*/
-/*}*/
-
-/*.project-header {*/
-/*  display: flex;*/
-/*  justify-content: space-between;*/
-/*  align-items: center;*/
-/*}*/
-
-/*.project-name {*/
-/*  font-size: 24px;*/
-/*  font-weight: 600;*/
-/*  color: #303133;*/
-/*}*/
-
-/*.team-count {*/
-/*  font-size: 16px;*/
-/*  color: #606266;*/
-/*}*/
 
 .card-header h3 {
   margin: 0;
@@ -368,6 +469,27 @@ onMounted(async () => {
   .expected-completion {
     width: 100%;
     justify-content: center;
+  }
+
+  /* 角色颜色样式 */
+  :deep(.role-manager) {
+    color: #409eff; /* 蓝色 - Manager */
+    font-weight: 500;
+  }
+
+  :deep(.role-developer) {
+    color: #67c23a; /* 绿色 - Developer */
+    font-weight: 500;
+  }
+
+  :deep(.role-qa) {
+    color: #e6a23c; /* 橙色 - QA */
+    font-weight: 500;
+  }
+
+  :deep(.role-devops) {
+    color: #f56c6c; /* 红色 - DevOps */
+    font-weight: 500;
   }
 }
 </style>
