@@ -6,7 +6,6 @@ import com.onion.onionserver.model.dao.User;
 import com.onion.onionserver.model.dto.UserDTO;
 import com.onion.onionserver.model.dto.UtilDTO;
 import com.onion.onionserver.util.JwtTools;
-import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
