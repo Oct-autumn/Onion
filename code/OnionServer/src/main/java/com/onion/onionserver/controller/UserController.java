@@ -6,6 +6,7 @@ import com.onion.onionserver.model.dao.User;
 import com.onion.onionserver.model.dto.UserDTO;
 import com.onion.onionserver.model.dto.UtilDTO;
 import com.onion.onionserver.util.JwtTools;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -120,7 +121,7 @@ public class UserController {
         if (request.getEmail() != null) {
             user.setEmail(request.getEmail());
         }
-        if (request.getRole() != 0) {
+        if (request.getRole() != null) {
             // 非管理员不能修改角色
             if (authUser.getRole() != 1) {
                 return ResponseEntity.status(403).body(new UtilDTO.ErrorResponse(0, "Forbidden"));
@@ -181,6 +182,7 @@ public class UserController {
         if (authUser.getRole() != 1) {
             // 非管理员只能获取自己的信息
             var resp = new UserDTO.GetInfoResponse();
+            resp.setTotal(1);
             resp.setUsers(List.of(UserDTO.GetInfoResponse.UserInfo.fromDao(authUser)));
             return ResponseEntity.ok().body(resp);
         } else {
@@ -191,6 +193,7 @@ public class UserController {
 
             var allUsers = userManager.getAllUsers(page, pagenum);
             var resp = new UserDTO.GetInfoResponse();
+            resp.setTotal(allUsers.size());
             resp.setUsers(allUsers.stream().map(UserDTO.GetInfoResponse.UserInfo::fromDao).toList());
             return ResponseEntity.ok().body(resp);
         }
