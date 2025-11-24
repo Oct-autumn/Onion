@@ -28,7 +28,7 @@ public class AuthenticationManager {
     public void init() {
         User user;
         {
-            var result = userRepo.findById(0);
+            var result = userRepo.findById(1);
             if (result.isPresent()) {
                 user = result.get();
             } else {
