@@ -3,6 +3,8 @@
 ## 项目介绍
 
 Onion 是一个基于 **Spring Boot（后端）** 和 **Vue 3（前端）** 技术栈开发的项目管理系统，旨在为团队提供高效的项目协作、任务看板（Kanban）管理、用户管理等功能，助力团队提升项目管理效率。
+![Onion kanban](doc/kanban.png)
+![Onion project](doc/projectdetail.png)
 
 ## 技术栈
 
