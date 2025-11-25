@@ -126,7 +126,7 @@
 
     <!-- Add Member Dialog -->
     <el-dialog title="Add Member" v-model="addMemberDialogVisible" width="400px">
-      <el-form ref="addMemberFormRef" :model="newMember" label-width="80px">
+      <el-form ref="addMemberFormRef" :model="newMember" label-width="120px">
         <el-form-item label="Name" prop="name">
           <el-input v-model="newMember.name" placeholder="Please enter name" />
         </el-form-item>
