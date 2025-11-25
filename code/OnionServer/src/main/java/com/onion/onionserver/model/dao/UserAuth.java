@@ -9,7 +9,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-@Table(name="user_auth")
+@Table(name = "user_auth")
 public class UserAuth {
     @Id
     private Integer id;
@@ -20,7 +20,7 @@ public class UserAuth {
     @Column(name = "salt", nullable = false, length = 32)
     private String salt;
 
-    @OneToOne
+    @OneToOne(cascade = CascadeType.DETACH)
     @MapsId
     @JoinColumn(name = "id")
     private User user;

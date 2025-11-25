@@ -6,11 +6,8 @@ import com.onion.onionserver.repo.UserAuthRepo;
 import com.onion.onionserver.repo.UserRepo;
 import com.onion.onionserver.util.HashTools;
 import com.onion.onionserver.util.RandTools;
-import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
 
 import static java.util.Objects.requireNonNull;
 
@@ -22,34 +19,6 @@ public class AuthenticationManager {
     public AuthenticationManager(UserRepo userRepo, UserAuthRepo userAuthRepo) {
         this.userRepo = userRepo;
         this.userAuthRepo = userAuthRepo;
-    }
-
-    @PostConstruct
-    public void init() {
-        User user;
-        {
-            var result = userRepo.findById(0);
-            if (result.isPresent()) {
-                user = result.get();
-            } else {
-                var newUser = new User();
-                newUser.setUsername("admin");
-                newUser.setEmail("admin@onion.com");
-                newUser.setRole(1);
-                LocalDateTime now = LocalDateTime.now();
-                newUser.setCreateAt(now);
-                newUser.setUpdateAt(now);
-                userRepo.save(newUser);
-                user = newUser;
-            }
-        }
-
-        {
-            var result = userAuthRepo.findById(user.getId());
-            if (result.isEmpty()) {
-                createAuth(user.getId(), "AdminAdmin");
-            }
-        }
     }
 
     public void createAuth(Integer user_id, String password) {

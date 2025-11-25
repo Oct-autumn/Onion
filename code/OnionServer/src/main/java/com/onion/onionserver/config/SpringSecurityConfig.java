@@ -26,7 +26,23 @@ public class SpringSecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/user/login", "/user/register").permitAll()
+                        .requestMatchers(
+                                "/",
+                                "/index.html",
+                                "/favicon.ico",
+                                // ⭐Static resources produced by Vue build
+                                "/assets/**",
+                                "/js/**",
+                                "/css/**",
+                                "/img/**",
+                                // ⭐ API that should be public
+                                "/login",
+                                "/user/login",
+                                "/register",
+                                "/user/register",
+                                "/Onion_slogan_sentence.png",
+                                "/Onion_slogan_word.png"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .httpBasic(Customizer.withDefaults());
