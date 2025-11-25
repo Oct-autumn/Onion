@@ -58,27 +58,6 @@
           </el-col>
         </el-row>
 
-        <!-- Role field: only admin users can see and edit -->
-        <el-row :gutter="20" v-if="isAdmin">
-          <el-col :span="12">
-            <el-form-item label="Role" prop="role">
-              <el-select 
-                v-model="profileForm.role" 
-                placeholder="Select role" 
-                style="width: 100%"
-                :disabled="!isEditMode"
-              >
-                <el-option
-                    v-for="role in selectableRoles"
-                    :key="role.value"
-                    :label="role.label"
-                    :value="role.value"
-                />
-              </el-select>
-            </el-form-item>
-          </el-col>
-        </el-row>
-
         <el-form-item v-if="isEditMode">
           <el-button type="primary" @click="saveProfile" :loading="loading">
             Save Changes
@@ -117,7 +96,13 @@
     </el-card>
 
     <el-dialog v-model="changePasswordDialogVisible" title="Change Password" width="500px">
-      <el-form :model="passwordForm" :rules="passwordRules" ref="passwordFormRef" label-width="100px">
+      <el-form
+          :model="passwordForm"
+          :rules="passwordRules"
+          ref="passwordFormRef"
+          label-width="130px"
+          class="password-form"
+      >
         <el-form-item label="Current Password" prop="currentPassword">
           <el-input
               v-model="passwordForm.currentPassword"
@@ -167,20 +152,7 @@ const profileFormRef = ref(null)
 const passwordFormRef = ref(null)
 
 const currentUser = ref(null)
-// Role options for display (value is the role code number)
-const roleOptions = [
-  { label: 'Admin', value: 1 },
-  { label: 'Normal User', value: 0 },
-  { label: 'Project Manager', value: 2 },
-  { label: 'Developer', value: 3 },
-  { label: 'Tester', value: 4 },
-  { label: 'Designer', value: 5 },
-  { label: 'Product Manager', value: 6 },
-]
 const isAdmin = computed(() => currentUser.value?.role === 1)
-const selectableRoles = computed(() =>
-    isAdmin.value ? roleOptions : roleOptions.filter(role => role.value !== 1)
-)
 // Reverse map: role code to label for display
 const roleLabelMap = {
   0: 'Normal User',
@@ -212,30 +184,6 @@ const rules = {
   email: [
     { required: true, message: 'Please enter your email', trigger: 'blur' },
     { type: 'email', message: 'Please enter a valid email address', trigger: 'blur' }
-  ],
-  role: [
-    { 
-      required: false,
-      message: 'Please select a role', 
-      trigger: 'change',
-      validator: (rule, value, callback) => {
-        // Validate role if in edit mode
-        if (isEditMode.value) {
-          if (value === undefined || value === null || value === '') {
-            callback(new Error('Please select a role'))
-          } else if (typeof value !== 'number') {
-            callback(new Error('Role must be a number'))
-          } else if (!isAdmin.value && value === 1) {
-            // Non-admin users cannot select Admin role
-            callback(new Error('You are not allowed to select Admin role'))
-          } else {
-            callback()
-          }
-        } else {
-          callback() // Skip validation in non-edit mode
-        }
-      }
-    }
   ]
 }
 
@@ -323,33 +271,19 @@ const saveProfile = async () => {
       user_id: userId,
     }
 
-    // Only admin users can update role
-    if (isAdmin.value) {
-      // Validate role value for admin
-      if (profileForm.role < 0 || profileForm.role > 6) {
-        ElMessage.error('Unsupported role selected')
-        loading.value = false
-        return
-      }
-      payload.role = profileForm.role
-    } else {
-      // Non-admin users send role: 0 (which means no role change in backend)
-      payload.role = 0
-    }
-
     // 使用封装的 axios 实例发送 POST 请求
     await request.post('/user/update', payload);
 
     // 请求成功后更新本地存储和当前用户信息
-    const updatedUser = {
+    const updatedUserInfo = {
       userId: userId,
       username: profileForm.name.trim(),
       email: profileForm.email.trim(),
-      role: isAdmin.value ? profileForm.role : currentUser.value.role // Only update role for admin users
+      role: currentUser.value.role
     }
     // 同样，存储的 key 应为 'userInfo'
-    localStorage.setItem('userInfo', JSON.stringify(updatedUser))
-    currentUser.value = updatedUser
+    localStorage.setItem('userInfo', JSON.stringify(updatedUserInfo))
+    currentUser.value = updatedUserInfo
 
     ElMessage.success('Profile updated successfully')
     isEditMode.value = false
@@ -513,6 +447,11 @@ const changePassword = async () => {
 .profile-form-card,
 .account-settings-card {
   margin-bottom: 20px;
+}
+
+.password-form :deep(.el-form-item__label) {
+  white-space: nowrap;
+  padding-left: 16px;
 }
 
 @media (max-width: 768px) {

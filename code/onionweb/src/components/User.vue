@@ -47,9 +47,11 @@
       <el-pagination
           v-model:current-page="currentPage"
           :page-size="pageSize"
+          :page-sizes="pageSizes"
           :total="total"
-          layout="total, prev, pager, next"
+          layout="total, sizes, prev, pager, next"
           @current-change="handleCurrentChange"
+          @size-change="handleSizeChange"
       />
     </div>
 
@@ -85,7 +87,8 @@ import { ElMessage } from 'element-plus'
 import request from "@/utils/request.js";
 
 const currentPage = ref(1)
-const pageSize = 20
+const pageSize = ref(20)
+const pageSizes = [5, 10, 20]
 const total = ref(0)
 const loading = ref(false)
 
@@ -154,16 +157,16 @@ const fetchUsers = async () => {
   try {
     // 使用 request.get 替代 fetch
     // 注意：get 请求的参数可以直接放在第二个参数的 params 对象里
-    const result = await request.get('/user/list', {
+    const result = await request.get('/user/info', {
       params: {
         page: currentPage.value,
-        pagenum: pageSize
+        pagenum: pageSize.value
       }
     });
 
     // 由于我们在 axios 响应拦截器中已经 return response.data，
     // 所以这里的 result 直接就是后端返回的数据体
-    const list = Array.isArray(result?.data) ? result.data : Array.isArray(result) ? result : []
+    const list = Array.isArray(result?.users) ? result.users : []
     users.value = list.map(mapUser)
     total.value = result?.total ?? list.length ?? 0
   } catch (error) {
@@ -180,6 +183,12 @@ const fetchUsers = async () => {
 
 const handleCurrentChange = (val) => {
   currentPage.value = val
+  fetchUsers()
+}
+
+const handleSizeChange = (val) => {
+  pageSize.value = val
+  currentPage.value = 1
   fetchUsers()
 }
 
