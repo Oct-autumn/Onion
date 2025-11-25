@@ -103,11 +103,11 @@ const submitForm = async () => { // 确保外层函数是 async
 
   if (isValid) { // 校验通过再执行请求
     loading.value = true;
-    try {
+      try {
       // 直接使用封装的 request 发起请求（无需嵌套 try）
       const response = await request.post('/user/login', {
-        email: loginForm.email,
-        password: loginForm.password
+            email: loginForm.email,
+            password: loginForm.password
       });
 
       // 登录成功：存储 Token 和用户信息
@@ -117,19 +117,19 @@ const submitForm = async () => { // 确保外层函数是 async
 
       ElMessage.success('Login successful!');
       router.push('/project');
-    } catch (error) {
+      } catch (error) {
       // 捕获请求错误（包括网络错误、后端返回的错误）
       ElMessage.error(error.message || 'Login failed');
       console.error('Login error:', error);
-    } finally {
+      } finally {
       loading.value = false; // 无论成功失败，都关闭加载
     }
-  }
+}
 };
 
 const resetForm = () => {
   if (!loginFormRef.value) return
-  loginFormRef.value.resetFields()
+loginFormRef.value.resetFields()
 };
 </script>
 
