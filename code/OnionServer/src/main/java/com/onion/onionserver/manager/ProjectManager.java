@@ -41,4 +41,9 @@ public class ProjectManager {
     public List<Project> projectListByOwnerId(Integer ownerId){
         return projectRepo.findByOwnerId(ownerId);
     }
+    
+    //更新project
+    public Project updateProject(Project p) {
+        return projectRepo.save(p);
+    }
 }

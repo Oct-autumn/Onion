@@ -56,40 +56,53 @@ const dummyTaskRes = {
 
 const fetchMembers = async () => {
   try {
+    console.info("=====fetchMembers begin=======")
     const res = await request.get(`/project/info/${projectId}/team`)
     //const res = dummyMembersRes
     
-    membersName = res.data.map(member => member.name)  // Added .data
-    membersWorkingHour = res.data.map(member => member.workingHour)  // Added .data
+    membersName = res.members.map(member => member.name)  // Added .data
+    membersWorkingHour = res.members.map(member => member.workingHour)  // Added .data
+    console.info("membersName ======")
+    console.info(membersName)
+    console.info("membersWorkingHour ======")
+    console.info(membersWorkingHour)
+    console.info("==============end============")
   } catch (err) {
     console.error(err)
-    ElMessage.error('网络错误，获取团队成员失败')
+    ElMessage.error('Network error. Failed to retrieve team members.')
   } 
 }
 
 const fetchProjectTasks = async () => {
   try {
+    console.info("========fetchProjectTasks begin========")
     const res = await request.get(`/kanban/tasks`, { params: { projectId } })
 	//const res = dummyTaskRes;
 	
 	// Group tasks by status and count them
-	const statusCountMap = res.data.reduce((acc, task) => {
+	const statusCountMap = res.reduce((acc, task) => {
 	  acc[task.status] = (acc[task.status] || 0) + 1;
 	  return acc;
 	}, {});
-
+    console.info("==== statusCountMap =====")
+    console.info(statusCountMap)
 	// Create two arrays: one for statuses and one for counts
-	taskStatuses = Object.keys(statusCountMap);
-	taskCount = Object.values(statusCountMap);
+    taskStatuses = Object.keys(statusCountMap);
+    taskCount = Object.values(statusCountMap);
+    console.info("==== taskStatuses =====");
+    console.info(taskStatuses);
+    console.info("==== taskCount =====");
+    console.info(taskCount);
+    console.info("==== end =====");
   } catch (err) {
     console.error(err)
-    ElMessage.error('获取任务失败')
+    ElMessage.error('Failed to retrieve tasks.')
   }
 }
 
-const initCharts = () => {
-  fetchProjectTasks()
-  fetchMembers()
+const initCharts = async () => {
+  console.log("===== init =====")
+  await Promise.all([fetchMembers(), fetchProjectTasks()])
 
   // Pie Chart for task distribution
   taskPieChartRefInstance = echarts.init(taskPieChartRef.value)

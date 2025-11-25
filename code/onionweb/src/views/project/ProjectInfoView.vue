@@ -42,17 +42,17 @@
         <el-table-column prop="name" label="Name" />
         <el-table-column prop="role" label="Role">
           <template #default="scope">
-    <span :style="{
-      color: {
-        'Manager': '#409eff',
-        'Developer': '#67c23a',
-        'QA': '#e6a23c',
-        'DevOps': '#f56c6c'
-      }[scope.row.role] || 'inherit',
-      fontWeight: '500'
-    }">
-      {{ scope.row.role }}
-    </span>
+            <span :style="{
+              color: {
+                'Manager': '#409eff',
+                'Developer': '#67c23a',
+                'QA': '#e6a23c',
+                'DevOps': '#f56c6c'
+              }[scope.row.role] || 'inherit',
+              fontWeight: '500'
+            }">
+              {{ scope.row.role }}
+            </span>
           </template>
         </el-table-column>
         <el-table-column prop="status" label="Status">

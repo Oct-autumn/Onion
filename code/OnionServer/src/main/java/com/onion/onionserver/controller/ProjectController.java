@@ -5,8 +5,11 @@ import com.onion.onionserver.model.dao.Project;
 import com.onion.onionserver.model.dao.User;
 import com.onion.onionserver.model.dto.ProjectCreateDTO;
 import com.onion.onionserver.model.dto.ProjectResponseDTO;
+import com.onion.onionserver.model.dto.ProjectUpdateDto;
+import com.onion.onionserver.model.enums.ProjectStatus;
 import com.onion.onionserver.util.JwtTools;
 import io.jsonwebtoken.Claims;
+import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -64,14 +67,28 @@ public class ProjectController {
     @GetMapping("/info/{id}")
     public ResponseEntity<ProjectResponseDTO> info(@PathVariable Long id) {
         Project p = projectManager.getProject(id);
-        ProjectResponseDTO dto = new ProjectResponseDTO();
-        dto.setProjectId(p.getId());
-        dto.setName(p.getName());
-        dto.setDescription(p.getDescription());
-        dto.setExpectedCompletion(p.getExpectedCompletion());
-        dto.setOwnerId(p.getOwnerId());
-        dto.setStatus(p.getStatus());
-        return ResponseEntity.ok(dto);
+        return ResponseEntity.ok(buidlResp(p));
+    }
+    
+    @PutMapping("/update")
+    public ResponseEntity update(@RequestBody ProjectUpdateDto projectUpdateDto) {
+        Project p = projectManager.getProject(projectUpdateDto.getProjectId());
+        ProjectStatus projectStatus =  projectUpdateDto.getStatus();
+        p.setStatus(projectStatus);
+        
+        return ResponseEntity.ok(buidlResp(p));
+    }
+    
+    private ProjectResponseDTO buidlResp (Project p) {
+        Project saved = projectManager.updateProject(p);
+        ProjectResponseDTO resp = new ProjectResponseDTO();
+        resp.setProjectId(saved.getId());
+        resp.setName(saved.getName());
+        resp.setDescription(saved.getDescription());
+        resp.setExpectedCompletion(saved.getExpectedCompletion());
+        resp.setOwnerId(saved.getOwnerId());
+        resp.setStatus(saved.getStatus());
+        return  resp;
     }
 
     // ---- helpers ----

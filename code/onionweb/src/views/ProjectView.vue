@@ -13,6 +13,7 @@
         stripe
         border
         v-loading="loading"
+        @cell-click="handleCellClick"
     >
       <el-table-column
           prop="name"
@@ -24,17 +25,39 @@
           </el-link>
         </template>
       </el-table-column>
-      <el-table-column prop="status" label="Status" />
+      <el-table-column prop="status" label="Status">
+        <template #default="scope">
+          <el-select
+              v-if="scope.row.projectId === editingRowId && scope.column.label === 'Status'"
+              v-model="scope.row.status"
+              @change="handleSave(scope.row)"
+              style="width: 100%;"
+              placeholder="Select status"
+          >
+            <el-option label="Not Started" value="Not Started"></el-option>
+            <el-option label="In Progress" value="In Progress"></el-option>
+            <el-option label="Completed" value="Completed"></el-option>
+          </el-select>
+          <span
+              v-else
+              :style="{
+          color: {
+                'Not Started': '#f56c6c',
+                'In Progress': '#409eff',
+                'QA': '#e6a23c',
+                'Completed': '#67c23a'
+              }[scope.row.status] || 'inherit',
+          fontWeight: '500'
+        }"
+          >
+        {{ scope.row.status }}
+      </span>
+        </template>
+      </el-table-column>
       <el-table-column prop="userName" label="Project Owner" />
       <el-table-column prop="createTime" label="Creation Date">
-<!--        <template #default="scope">-->
-<!--          {{ formatDate(scope.row.createTime) }}-->
-<!--        </template>-->
       </el-table-column>
       <el-table-column prop="expectedCompletion" label="Expected Completion Date">
-        <template #default="scope">
-<!--          {{ scope.row.expectedCompletion ? formatDate(scope.row.expectedCompletion) : 'Not Set' }}-->
-        </template>
       </el-table-column>
     </el-table>
 
@@ -119,6 +142,8 @@ const projects = ref([])
 // Dialog control
 const showAddProjectDialog = ref(false)
 
+const editingRowId = ref(null)
+
 // Form data
 const newProjectForm = ref({
   name: '',
@@ -137,6 +162,40 @@ const formRules = {
   planDate: [
     { required: true, message: 'Please select the expected completion date', trigger: 'change' }
   ]
+}
+
+
+
+// 点击单元格时进入编辑状态
+const handleCellClick = (row, column) => {
+  console.info("=====handleCellClick ==")
+  console.log('点击可编辑列，userId：', row.projectId, '列的 fixed 值：', column.label)
+  if (column.label === 'Status') {
+    console.log('点击可编辑列，userId：', row.projectId, '列的 fixed 值：', column.fixed)
+    editingRowId.value = row.projectId
+  }
+  console.info("=====editingRowId ==" + editingRowId)
+
+}
+
+// 保存编辑
+const handleSave = async (row) => {
+  try {
+    console.info("====handleSave=====")
+
+    await request.put('/project/update', {
+        projectId: row.projectId,
+        status: row.status, // 使用新值
+
+    });
+    ElMessage.success('Status updated successfully');
+    editingRowId.value = null // 退出编辑状态
+  } catch (err) {
+    console.error(err)
+    ElMessage.error(err.response?.data?.message || 'Failed to update member')
+    // 如果更新失败，可以回滚数据
+  }
+  await fetchProjects();
 }
 
 /**
@@ -166,11 +225,8 @@ const fetchProjects = async () => {
     })
     console.info("==========")
     console.info(res)
-    console.info("==========")
     const projectList = res || []
-    console.error("projectList")
     console.info(projectList)
-    console.info("=============")
     const processedProjects = projectList.map(project => ({
       projectId: project.projectId,
       name: project.name,
@@ -250,6 +306,31 @@ const submitNewProject = async () => {
     ElMessage.error(error.message || 'Failed to create project')
   }
 }
+
+/**
+ * 修改项目状态
+ */
+const handleStatusChange = async (row) => {
+  // 添加加载状态，防止重复提交
+  row.updating = true;
+  try {
+    await request.get('/project/update', {
+      params: {
+        projectId: row.projectId,
+        status: newStatus, // 使用新值
+      }
+    });
+    ElMessage.success('Status updated successfully');
+  } catch (err) {
+    console.error(err);
+    ElMessage.error('Failed to update status');
+    // 失败时回滚状态
+    row.status = row.status;
+  } finally {
+    // 移除加载状态
+    row.updating = false;
+  }
+};
 
 // Fetch project list on component mount
 onMounted(() => {
