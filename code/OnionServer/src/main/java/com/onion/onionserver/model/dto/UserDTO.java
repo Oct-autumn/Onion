@@ -60,6 +60,7 @@ public class UserDTO {
         private List<UserInfo> users;
         private int total;
 
+        @Data
         public static class UserInfo {
             private Integer id;
             private String username;
